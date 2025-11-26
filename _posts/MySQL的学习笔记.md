@@ -54,9 +54,52 @@ create table 表名(
 
 4.TCL语言：数据控制语言
 
+# DQL语言
+## 基础查询
+select 查询列表 from 表名
+
+1.查询表中的单个字段
+
+USE myemployees;(**一定要记得先进入对应的库**）
+
+select last_name from employees;
+
+2.查询表中的多个字段
+
+USE myemployees;
+
+select last_name,email,hiredate from employees;
+
+3.查询表中的所有字段
+
+（1）双击对应的字段可以直接写出来，不用一个一个敲：
+
+USE myemployees;
+
+SELECT `first_name`,`last_name`,`email`,`phone_number`,`job_id`,`salary`,`commission_pct`,`manager_id`,`department_id`,`hiredate` FROM employees;
+
+**`这个是着重号，当字段名字可能与库冲突的时候，可读性会变差，可以手动加上`**
+
+（2）
+
+USE myemployees;
+
+SELECT * FROM employees;
+
+这种方法按顺序输出字段，第一种方法可以自由选择顺序
+
+4.查询常量值
+
+SELECT 100;
 
 
+SELECT 'john';（mysql里面没有区分字符和字符串，都默认为字符串，查询时要加上'')
 
+5.查询表达式
 
+SELECT 100*100;
 
+6.查询函数
+
+SELECT VERSION();（得到这个函数的返回值）
 

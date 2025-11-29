@@ -103,3 +103,76 @@ SELECT 100*100;
 
 SELECT VERSION();（得到这个函数的返回值）
 
+7.为字段起别名
+
+方式一：
+
+select 100%98 as 结果;
+
+select last_name as 姓,first_name as 名 from employees;
+
+方式二：（不用AS）
+
+select 100%98  结果;
+
+select last_name  姓,first_name  名 from employees;
+
+**为了避免部分关键字冲突，要给别名加上双引号**
+
+SELECT last_name  "姓",first_name  "名" FROM employees;
+
+8.去重
+
+案例：查询员工表中所有的部门编号
+
+select department_id from employees;
+
+发现编号有很多相同重复的，只需加一个distinct即可
+
+select distinct department_id from employees;
+
+9.+号的作用
+
+mysql中+的作用：
+
+**仅仅只有一个功能:运算符**
+
+1.select 100+90; 两者都为数值型，做加法运算
+
+2.select '123'+90; 
+
+其中一方为字符型，试图将字符型转换成数值型；
+
+如果转换成功，则将做加法运算;
+
+如果转换失败，则将字符型数值转换为0；（select 'john'+90; 结果为90）
+
+3.select null+100;  结果为null
+
+**只要一方为null，结果必定为null**
+
+案例：查询员工名和姓组成一个字段，并显示为姓名
+
+显然：select last_name+first_name as 姓名 from employees; 这个不可行，结果为0
+
+使用concat（）函数：
+
+select concat(first_name,' ',last_name) as 姓名 from employees;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

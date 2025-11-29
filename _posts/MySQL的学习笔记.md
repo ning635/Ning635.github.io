@@ -159,6 +159,99 @@ mysql中+的作用：
 
 select concat(first_name,' ',last_name) as 姓名 from employees;
 
+## 基础查询的测试题
+
+1.
+<img width="486" height="131" alt="image" src="https://github.com/user-attachments/assets/8c257b32-cb03-4680-819f-3c2d388fdfe2" />
+
+运行结果为：
+
+<img width="448" height="33" alt="image" src="https://github.com/user-attachments/assets/43651627-0b83-4129-8333-de1f67668359" />
+
+可执行成功
+
+2.
+<img width="444" height="87" alt="image" src="https://github.com/user-attachments/assets/90215e9f-04ab-487a-99f7-af91e978a269" />
+
+也是 可执行成功
+
+3.
+<img width="593" height="153" alt="image" src="https://github.com/user-attachments/assets/4c5a90eb-d495-4eab-881f-96b170fa5393" />
+
+
+错误：
+
+（1）第二个逗号为中文逗号
+
+（2）双引号应该为英文双引号
+
+（3）建议加as
+
+正确答案：
+
+<img width="424" height="107" alt="image" src="https://github.com/user-attachments/assets/6a6d0222-e936-4446-b41f-68bd3e23a9e0" />
+
+4.
+<img width="683" height="35" alt="image" src="https://github.com/user-attachments/assets/f650de35-75b7-4eb4-83a7-719ca3a24935" />
+
+答案：
+
+desc departments;
+
+select * from departments;
+
+5.
+<img width="659" height="42" alt="image" src="https://github.com/user-attachments/assets/4da12bc0-b6c3-45a0-9d7c-06a4719fe5b3" />
+
+答案：select distinct job_id from employees;
+
+6.
+<img width="1010" height="40" alt="image" src="https://github.com/user-attachments/assets/3adc4f05-2807-4c68-858a-b50d66ecce23" />
+
+我最开始写的是答案是：
+
+select concat(first_name,',',`last_name`,',',`email`,',',`phone_number`,',',`job_id`,',',`salary`,',',`commission_pct`,',',`manager_id`,',',`department_id`,',',`hiredate`) as "out_put" from employees;
+
+但是我注意到commission——pct的值部分为null:
+
+<img width="182" height="413" alt="image" src="https://github.com/user-attachments/assets/4ee3577d-a636-457a-b5c7-93f435119cd3" />
+
+由于和null相加永远为null，所以不可行
+
+解法：
+
+**使用ifnull()函数，将前面为null的部分设为0，后面照旧：**
+
+语法示例select ifnull(commission_pct,0) as 奖金率
+from employees;
+
+正确答案：
+
+select concat(first_name,',',`last_name`,',',`email`,',',`phone_number`,',',`job_id`,',',`salary`,',',ifnull(commission_pct,0),',',ifnull(`manager_id`,0),',',ifnull(`department_id`,0),',',`hiredate`) as "out_put" 
+ from employees;
+
+## 进阶查询
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

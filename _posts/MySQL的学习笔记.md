@@ -1,3 +1,15 @@
+---
+layout:     post   				    # 使用的布局（不需要改）
+title:      MySQL的学习笔记 				# 标题 
+subtitle:     #副标题
+date:       2025-11-25 				# 时间
+author:     宁禅游 						# 作者
+header-img: img/post-bg-2015.jpg 	#这篇文章标题背景图片
+catalog: true 						# 是否归档
+tags:								#标签
+    - 学习
+---
+
 # MySQL的学习笔记
 尚硅谷的基础篇加高级篇：https://www.bilibili.com/video/BV12b411K7Zu?spm_id_from=333.788.player.switch&vd_source=35450fe553c5b3e35dc064c98d2bcf6d&p=15
 ## 常见命令

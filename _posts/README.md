@@ -1,0 +1,508 @@
+# 校园失物招领系统 
+
+## 项目概述
+
+这是一个基于PHP和MySQL的校园失物招领系统，支持用户注册、登录、发布失物/拾物信息、领回申请、投诉处理、管理员审核等功能。系统采用前后端分离架构，前端使用HTML/CSS/JavaScript，后端使用PHP，数据库使用MySQL。
+
+## 主要功能
+
+### 1. 用户管理
+
+- **注册**: 用户填写证件号、姓名、手机号、密码进行注册。
+- **登录**: 支持手机号/密码登录，区分管理员和普通用户。
+- **用户信息管理**: 查看和修改个人信息。
+
+**代码示例** (register.php):
+
+```php
+<?php
+header("Content-Type: application/json; charset=utf-8");
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
+// 引入数据库连接
+include '../conn.php';
+if ($conn->connect_error) {
+    die(json_encode([
+        'status' => 'error',
+        'msg' => '数据库连接失败：' . $conn->connect_error,
+        'redirect' => '../html/login.html'
+    ], JSON_UNESCAPED_UNICODE));
+}
+
+// 接收参数
+$id_card = trim($_POST['id_card'] ?? '');
+$name = trim($_POST['name'] ?? '');
+$phone = trim($_POST['phone'] ?? '');
+$password = trim($_POST['password'] ?? '');
+$repassword = trim($_POST['repassword'] ?? '');
+$user_type = $_POST['user_type'] ?? 'user';
+
+// 参数验证
+$errors = [];
+if (empty($id_card)) $errors[] = '证件号不能为空';
+if (empty($name)) $errors[] = '姓名不能为空';
+if (empty($phone)) $errors[] = '手机号不能为空';
+if (!preg_match('/^1[3-9]\d{9}$/', $phone)) $errors[] = '手机号格式错误';
+if (empty($password) || strlen($password) < 6) $errors[] = '密码至少6位';
+if ($password !== $repassword) $errors[] = '两次密码不一致';
+
+if (!empty($errors)) {
+    $response['msg'] = implode('，', $errors);
+    echo json_encode($response, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+try {
+    // 检查证件号是否重复
+    $check_sql = "SELECT `id_card` FROM `users` WHERE `id_card` = ? LIMIT 1";
+    $check_stmt = $conn->prepare($check_sql);
+    $check_stmt->bind_param("s", $id_card);
+    $check_stmt->execute();
+    $check_result = $check_stmt->get_result();
+
+    if ($check_result->num_rows > 0) {
+        $response['msg'] = '该证件号已注册';
+    } else {
+        // 插入数据
+        $insert_sql = "INSERT INTO `users` (`id_card`, `name`, `phone`, `password`, `user_type`) VALUES (?, ?, ?, ?, ?)";
+        $insert_stmt = $conn->prepare($insert_sql);
+        $insert_stmt->bind_param("sssss", $id_card, $name, $phone, $password, $user_type);
+        $insert_stmt->execute();
+      
+        if ($insert_stmt->affected_rows === 1) {
+            $response['status'] = 'success';
+            $response['msg'] = '注册成功，请登录';
+        } else {
+            $response['msg'] = '注册失败：' . $insert_stmt->error;
+        }
+        $insert_stmt->close();
+    }
+    $check_stmt->close();
+    $conn->close();
+} catch (Exception $e) {
+    $response['msg'] = '注册异常：' . $e->getMessage();
+}
+
+echo json_encode($response, JSON_UNESCAPED_UNICODE);
+exit;
+?>
+```
+
+### 2. 失物/拾物信息管理
+
+- **发布失物**: 用户填写物品信息、丢失地点和时间。
+- **发布拾物**: 用户填写拾取物品信息。
+- **物品查询**: 支持按类别、名称查询物品。
+
+**代码示例** (lost_item.php):
+
+```php
+<?php
+header('Content-Type: application/json; charset=utf-8');
+session_start();
+require 'db_connect.php';
+
+// 检查登录
+if (!isset($_SESSION['user_id'])) {
+    echo json_encode(['code' => 401, 'msg' => '请先登录']);
+    exit;
+}
+
+$user_id = $_SESSION['user_id'];
+$action = $_GET['action'] ?? '';
+
+if ($action === 'add') {
+    $item_id = $_POST['item_id'] ?? '';
+    $lost_place = $_POST['lost_place'] ?? '';
+    $lost_time = $_POST['lost_time'] ?? '';
+
+    if (empty($item_id) || empty($lost_place) || empty($lost_time)) {
+        echo json_encode(['code' => 400, 'msg' => '参数不全']);
+        exit;
+    }
+
+    $sql = "INSERT INTO lostitem (user_id, item_id, lost_place, lost_time) VALUES (?, ?, ?, ?)";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$user_id, $item_id, $lost_place, $lost_time]);
+  
+    echo json_encode(['code' => 200, 'msg' => '发布成功']);
+    exit;
+}
+
+if ($action === 'list') {
+    $sql = "SELECT li.*, i.item_name, i.category, u.name as user_name FROM lostitem li 
+            JOIN item i ON li.item_id = i.item_id 
+            JOIN users u ON li.user_id = u.user_id";
+    $stmt = $pdo->query($sql);
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    echo json_encode(['code' => 200, 'data' => $data]);
+    exit;
+}
+
+echo json_encode(['code' => 400, 'msg' => '无效操作']);
+?>
+```
+
+### 3. 领回申请和审核
+
+- **提交领回申请**: 用户对匹配的失物/拾物提交领回申请。
+- **管理员审核**: 管理员审核领回申请，批准或拒绝。
+- **状态跟踪**: 实时查看申请状态。
+
+**代码示例** (claim.php):
+
+```php
+<?php
+header('Content-Type: application/json; charset=utf-8');
+session_start();
+require 'db_connect.php';
+
+if (!isset($_SESSION['user_id'])) {
+    echo json_encode(['code' => 401, 'msg' => '请先登录']);
+    exit;
+}
+
+$user_id = $_SESSION['user_id'];
+$action = $_GET['action'] ?? '';
+
+if ($action === 'add') {
+    $lost_id = $_POST['lost_id'] ?? null;
+    $found_id = $_POST['found_id'] ?? null;
+
+    if (!$lost_id && !$found_id) {
+        echo json_encode(['code' => 400, 'msg' => '必须指定失物或拾物ID']);
+        exit;
+    }
+
+    $sql = "INSERT INTO claim (user_id, lost_id, found_id) VALUES (?, ?, ?)";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$user_id, $lost_id, $found_id]);
+  
+    echo json_encode(['code' => 200, 'msg' => '申请提交成功']);
+    exit;
+}
+
+if ($action === 'list') {
+    $sql = "SELECT c.*, u.name, li.lost_place, fi.found_place FROM claim c 
+            LEFT JOIN users u ON c.user_id = u.user_id 
+            LEFT JOIN lostitem li ON c.lost_id = li.lost_id 
+            LEFT JOIN founditem fi ON c.found_id = fi.found_id 
+            WHERE c.user_id = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$user_id]);
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    echo json_encode(['code' => 200, 'data' => $data]);
+    exit;
+}
+
+echo json_encode(['code' => 400, 'msg' => '无效操作']);
+?>
+```
+
+### 4. 投诉处理
+
+- **提交投诉**: 对领回申请进行投诉（冒领、信息错误等）。
+- **管理员处理**: 管理员查看和处理投诉。
+
+**代码示例** (complaint.php):
+
+```php
+<?php
+header('Content-Type: application/json; charset=utf-8');
+session_start();
+require 'db_connect.php';
+
+if (!isset($_SESSION['user_id'])) {
+    echo json_encode(['code' => 401, 'msg' => '请先登录']);
+    exit;
+}
+
+$user_id = $_SESSION['user_id'];
+$action = $_GET['action'] ?? '';
+
+if ($action === 'add') {
+    $claim_id = $_POST['claim_id'] ?? '';
+    $type = $_POST['type'] ?? '';
+    $reason = $_POST['reason'] ?? '';
+
+    if (empty($claim_id) || empty($type) || empty($reason)) {
+        echo json_encode(['code' => 400, 'msg' => '参数不全']);
+        exit;
+    }
+
+    $sql = "INSERT INTO complaint (claim_id, user_id, type, reason) VALUES (?, ?, ?, ?)";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$claim_id, $user_id, $type, $reason]);
+  
+    echo json_encode(['code' => 200, 'msg' => '投诉提交成功']);
+    exit;
+}
+
+if ($action === 'list') {
+    $sql = "SELECT c.*, cl.status as claim_status FROM complaint c 
+            JOIN claim cl ON c.claim_id = cl.claim_id 
+            WHERE c.user_id = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$user_id]);
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    echo json_encode(['code' => 200, 'data' => $data]);
+    exit;
+}
+
+echo json_encode(['code' => 400, 'msg' => '无效操作']);
+?>
+```
+
+### 5. 失信名单和账号冻结
+
+- **失信名单管理**: 管理员添加用户至失信名单。
+- **自动冻结**: 失信次数达到1次时自动冻结账号。
+- **解除冻结**: 管理员可解除失信和冻结状态。
+
+**代码示例** (blacklist.php):
+
+```php
+<?php
+header('Content-Type: application/json; charset=utf-8');
+session_start();
+require 'db_connect.php';
+
+// 仅管理员可访问
+if ($_SESSION['user_type'] !== 'admin') {
+    echo json_encode(['code' => 403, 'msg' => '无权限']);
+    exit;
+}
+
+$action = $_GET['action'] ?? '';
+
+if ($action === 'add') {
+    $user_id = $_POST['user_id'] ?? '';
+    $reason = $_POST['reason'] ?? '';
+    $admin_id = $_SESSION['user_id'];
+
+    if (empty($user_id) || empty($reason)) {
+        echo json_encode(['code' => 400, 'msg' => '参数不全']);
+        exit;
+    }
+
+    // 插入新的失信记录
+    $sql = "INSERT INTO creditblacklist (user_id, admin_id, reason, add_time) VALUES (?, ?, ?, NOW())";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$user_id, $admin_id, $reason]);
+
+    // 统计该用户在失信名单中的记录数
+    $countStmt = $pdo->prepare("SELECT COUNT(*) FROM creditblacklist WHERE user_id = ?");
+    $countStmt->execute([$user_id]);
+    $creditCount = (int)$countStmt->fetchColumn();
+
+    // 若达到阈值（>=1），则在 accountfreeze 中插入冻结记录（若尚未冻结）
+    $frozenCreated = false;
+    $checkFreeze = $pdo->prepare("SELECT * FROM accountfreeze WHERE user_id = ? AND unfreeze_time IS NULL");
+    $checkFreeze->execute([$user_id]);
+    $existingFreeze = $checkFreeze->fetch();
+    if ($creditCount >= 1 && !$existingFreeze) {
+        $freezeReason = '失信次数≥1次，系统自动冻结';
+        $ins = $pdo->prepare("INSERT INTO accountfreeze (user_id, admin_id, reason, freeze_time) VALUES (?, ?, ?, NOW())");
+        $ins->execute([$user_id, $admin_id, $freezeReason]);
+        $frozenCreated = true;
+    }
+
+    $isNowFrozen = (bool)$existingFreeze || $frozenCreated;
+
+    echo json_encode(['code' => 200, 'msg' => '添加成功', 'credit_count' => $creditCount, 'frozen' => $isNowFrozen]);
+    exit;
+}
+
+if ($action === 'remove') {
+    $credit_id = $_POST['credit_id'] ?? '';
+    $user_id = $_POST['user_id'] ?? '';
+
+    if (empty($credit_id) && empty($user_id)) {
+        echo json_encode(['code' => 400, 'msg' => '参数不全']);
+        exit;
+    }
+
+    if (!empty($credit_id)) {
+        $sql = "DELETE FROM creditblacklist WHERE credit_id = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$credit_id]);
+        echo json_encode(['code' => 200, 'msg' => '解除成功']);
+        exit;
+    }
+
+    try {
+        $pdo->beginTransaction();
+
+        $del = $pdo->prepare("DELETE FROM creditblacklist WHERE user_id = ?");
+        $del->execute([$user_id]);
+
+        $upd = $pdo->prepare("UPDATE accountfreeze SET unfreeze_time = NOW() WHERE user_id = ? AND unfreeze_time IS NULL");
+        $upd->execute([$user_id]);
+
+        $pdo->commit();
+        echo json_encode(['code' => 200, 'msg' => '解除成功']);
+        exit;
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        echo json_encode(['code' => 500, 'msg' => '解除失败：' . $e->getMessage()]);
+        exit;
+    }
+}
+
+if ($action === 'list') {
+    $sql = "SELECT credit_id, user_id, reason, add_time FROM creditblacklist";
+    $stmt = $pdo->query($sql);
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    echo json_encode(['code' => 200, 'msg' => '成功', 'data' => $data]);
+    exit;
+}
+
+echo json_encode(['code' => 400, 'msg' => '无效操作']);
+?>
+```
+
+## 技术栈
+
+- **前端**: HTML5, CSS3, JavaScript (ES6+), Font Awesome
+- **后端**: PHP 7+, MySQL 5.7+
+- **数据库**: MySQL, 使用InnoDB引擎
+- **服务器**: Apache (WAMP集成环境)
+
+## 技术要点
+
+### 1. 数据库设计
+
+- 使用外键约束保证数据完整性
+- 枚举类型限制字段值范围
+- 索引优化查询性能
+
+**代码示例** (init.sql):
+
+```sql
+CREATE TABLE IF NOT EXISTS `User` (
+  `user_id` INT PRIMARY KEY AUTO_INCREMENT COMMENT '用户ID（主键，自增）',
+  `id_card` VARCHAR(20) NOT NULL UNIQUE COMMENT '证件号（唯一，非空）',
+  `name` VARCHAR(50) NOT NULL COMMENT '姓名（非空）',
+  `phone` VARCHAR(20) NOT NULL COMMENT '联系方式（非空）',
+  `password` VARCHAR(255) NOT NULL COMMENT '密码（加密存储）',
+  `user_type` ENUM('admin','user') NOT NULL DEFAULT 'user' COMMENT '用户类型：管理员/普通用户',
+  `reg_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间（默认当前时间）'
+) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
+```
+
+### 2. 安全措施
+
+- 使用预处理语句防止SQL注入
+- 密码哈希存储
+- 会话管理
+- 输入验证和过滤
+
+**代码示例** (安全输入验证):
+
+```php
+// 参数验证
+$errors = [];
+if (empty($id_card)) $errors[] = '证件号不能为空';
+if (empty($name)) $errors[] = '姓名不能为空';
+if (empty($phone)) $errors[] = '手机号不能为空';
+if (!preg_match('/^1[3-9]\d{9}$/', $phone)) $errors[] = '手机号格式错误';
+```
+
+### 3. 数据库触发器
+
+- 自动冻结失信用户
+- 维护数据一致性
+
+**代码示例** (trigger_credit_to_freeze):
+
+```sql
+DELIMITER //
+CREATE TRIGGER `trigger_credit_to_freeze`
+AFTER INSERT ON `CreditBlacklist`
+FOR EACH ROW
+BEGIN
+  DECLARE credit_count INT;
+  SELECT COUNT(*) INTO credit_count FROM `CreditBlacklist` WHERE `user_id` = NEW.`user_id`;
+  IF credit_count >= 1 THEN
+    IF NOT EXISTS (SELECT 1 FROM `AccountFreeze` WHERE `user_id` = NEW.`user_id` AND `unfreeze_time` IS NULL) THEN
+      INSERT INTO `AccountFreeze`(`user_id`, `admin_id`, `reason`)
+      VALUES (NEW.`user_id`, NEW.`admin_id`, '失信次数≥1次，系统自动冻结');
+    END IF;
+  END IF;
+END //
+DELIMITER ;
+```
+
+### 4. 前后端交互
+
+- 使用Fetch API进行AJAX请求
+- JSON格式数据交换
+- 错误处理和用户反馈
+
+**代码示例** (前端AJAX):
+
+```javascript
+fetch('../../api/blacklist.php?action=add', {
+    method: 'POST',
+    body: formData
+})
+.then(response => response.json())
+.then(data => {
+    if (data.code === 200) {
+        if (data.frozen) {
+            alert('添加成功，用户已被系统自动冻结（失信次数达到阈值）。');
+        } else {
+            alert('添加至失信名单成功！');
+        }
+        closeModal();
+        loadBlacklistUsers();
+    } else {
+        alert('添加失败：' + data.msg);
+    }
+})
+```
+
+### 5. 视图和存储过程
+
+- 视图简化复杂查询
+- 存储过程封装业务逻辑
+
+**代码示例** (view_user_lost_item):
+
+```sql
+CREATE VIEW `view_user_lost_item` AS
+SELECT 
+  u.`user_id`,
+  u.`name`,
+  i.`item_id`,
+  i.`item_name`,
+  li.`lost_id`,
+  li.`lost_place`,
+  li.`lost_time`,
+  li.`publish_time`
+FROM `User` u
+JOIN `LostItem` li ON u.`user_id` = li.`user_id`
+JOIN `Item` i ON li.`item_id` = i.`item_id`
+WHERE u.`user_type` = 'user';
+```
+
+## 安装和运行
+
+1. 安装WAMP服务器
+2. 将项目文件放入www目录
+3. 导入sql/init.sql创建数据库
+4. 访问http://localhost/exp4/html/index.html
+
+## 项目结构
+
+```
+exp4/
+├── api/          # PHP后端接口
+├── html/         # 前端页面
+│   ├── admin/    # 管理员页面
+│   └── user/     # 用户页面
+├── css/          # 样式文件
+├── js/           # JavaScript文件
+└── sql/          # 数据库脚本
+```

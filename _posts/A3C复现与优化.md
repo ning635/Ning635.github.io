@@ -1,3 +1,15 @@
+---
+layout:     post   				    # 使用的布局（不需要改）
+title:      A3C 深度强化学习				# 标题 
+subtitle:    算法复现与优化  #副标题
+date:       2025-12-26			# 时间
+author:     宁禅游 						# 作者
+header-img: img/post-bg-2015.jpg 	#这篇文章标题背景图片
+catalog: true 						# 是否归档
+tags:								#标签
+    - 学习
+    - 图形学
+
 # A3C 深度强化学习--算法复现与优化
 
 ---
@@ -847,3 +859,4 @@ python show_game.py --record --episodes 1
 3. [PyTorch A3C Implementation](https://github.com/ikostrikov/pytorch-a3c)
 
 ---
+

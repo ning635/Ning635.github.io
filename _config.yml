@@ -1,17 +1,17 @@
 # Site settings
-title: MY Blog
-SEOTitle: 宁禅游的博客 | MY Blog
+title: "Ning's Blog"
+SEOTitle: "宁禅游的学习与生活博客 | Ning's Blog"
 header-img: img/2a.jpg
 email: 3492544856@qq.com
-description: "Every failure is leading towards success."
-keyword: "MY, MY Blog, 宁禅游的博客, ningchanyou, 宁禅游"
-url: "http://ning635.github.io"          # your host, for absolute URL
+description: "记录计算机学习、课程项目、算法实验与生活片段。"
+keyword: "Ning Blog, 宁禅游, 学习博客, 个人博客, 求职, 秋招, GitHub Pages"
+url: "https://ning635.github.io"          # your host, for absolute URL
 baseurl: ""      # for example, '/blog' if your blog hosted on 'host/blog'
-github_repo: "https://github.com/ning635/ning635.github.io.git" # you code repository
+github_repo: "https://github.com/ning635/Ning635.github.io" # you code repository
 
 # Sidebar settings
 sidebar: true                           # whether or not using Sidebar.
-sidebar-about-description: "Goals determine what you going to be!"
+sidebar-about-description: "计算机学习者，正在把课程项目、算法实验和工程复盘整理成可展示的成长轨迹。"
 sidebar-avatar: /img/inlove.jpg      # use absolute URL, seeing it's used in both `/` and `/about/`
 
 
@@ -19,7 +19,7 @@ sidebar-avatar: /img/inlove.jpg      # use absolute URL, seeing it's used in bot
 # SNS settings
 RSS: false
 # zhihu_username:     宁禅游
-github_username:    宁禅游
+github_username:    ning635
 
 
 
@@ -71,10 +71,10 @@ gitalk:
 
 # Analytics settings
 # Baidu Analytics
-ba_track_id: b50bf2b12b5338a1845e33832976fd68
+# ba_track_id:
 
 # Google Analytics
-ga_track_id: 'UA-90855596-1'            # Format: UA-xxxxxx-xx
+# ga_track_id:                         # Format: UA-xxxxxx-xx
 ga_domain: auto              # 默认的是 auto, 这里我是自定义了的域名，你如果没有自己的域名，需要改成auto
 
 
@@ -88,7 +88,7 @@ featured-condition-size: 1              # 相同标签数量大于这个数，�
 
 
 # Progressive Web Apps
-chrome-tab-theme-color: "#000000"
+chrome-tab-theme-color: "#1a2a27"
 service-worker: true
 
 

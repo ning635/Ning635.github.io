@@ -1,7 +1,7 @@
 {
-  "name": "BY Blog",
-  "short_name": "BY Blog",
-  "description": "A personal blog by engineer",
+  "name": "Ning's Blog",
+  "short_name": "Ning Blog",
+  "description": "宁禅游的学习、项目与生活记录",
   "icons": [{
     "src": "icons/pwa_icon_128.png",
     "sizes": "128x128",
@@ -12,7 +12,7 @@
     "type": "image/png"
   }],
   "background_color": "#fff",
-  "theme_color": "#000",
+  "theme_color": "#1a2a27",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait"

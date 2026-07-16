@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#202225">
+    <title>回声库 · 回答档案</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23cf493f'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-size='38' font-family='serif' font-weight='700' fill='white'%3E%E5%9B%9E%3C/text%3E%3C/svg%3E">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="知识库导航">
+        <div class="brand-block">
+          <div class="brand-mark" aria-hidden="true">回</div>
+          <div>
+            <strong>回声库</strong>
+            <span>ANSWER ARCHIVE</span>
+          </div>
+          <button class="icon-button sidebar-close" id="sidebar-close" type="button" aria-label="关闭导航" title="关闭导航">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+
+        <button class="primary-action sidebar-action" id="new-entry-sidebar" type="button">
+          <i data-lucide="plus"></i>
+          <span>收录回答</span>
+        </button>
+
+        <nav class="category-nav" aria-label="记录分类">
+          <p class="nav-label">资料库</p>
+          <button class="category-button is-active" type="button" data-category="all">
+            <i data-lucide="library"></i>
+            <span>全部记录</span>
+            <b data-count="all">0</b>
+          </button>
+          <button class="category-button" type="button" data-category="favorite">
+            <i data-lucide="star"></i>
+            <span>已收藏</span>
+            <b data-count="favorite">0</b>
+          </button>
+
+          <div id="category-nav"></div>
+        </nav>
+
+        <div class="storage-status">
+          <span class="status-light" aria-hidden="true"></span>
+          <div>
+            <strong id="storage-label">本地存储</strong>
+            <span id="storage-summary">正在连接</span>
+          </div>
+        </div>
+      </aside>
+
+      <button class="sidebar-backdrop" id="sidebar-backdrop" type="button" aria-label="关闭导航"></button>
+
+      <main class="workspace">
+        <header class="topbar">
+          <button class="icon-button mobile-menu" id="mobile-menu" type="button" aria-label="打开导航" title="打开导航">
+            <i data-lucide="menu"></i>
+          </button>
+          <button class="icon-button library-toggle" id="library-toggle" type="button" aria-label="隐藏回答档案" title="隐藏回答档案" aria-controls="library-panel">
+            <i data-lucide="panel-left-close"></i>
+          </button>
+          <label class="search-box" for="search-input">
+            <i data-lucide="search"></i>
+            <input id="search-input" type="search" aria-label="搜索档案" placeholder="搜索标题、正文或标签" autocomplete="off">
+            <kbd>/</kbd>
+          </label>
+          <div class="topbar-actions">
+            <button class="secondary-action" id="import-entry" type="button" aria-label="导入文件" title="导入文件">
+              <i data-lucide="upload"></i>
+              <span class="button-label">导入文件</span>
+            </button>
+            <button class="primary-action" id="new-entry" type="button" aria-label="收录回答" title="收录回答">
+              <i data-lucide="plus"></i>
+              <span class="button-label">收录回答</span>
+            </button>
+          </div>
+        </header>
+
+        <div class="content-grid">
+          <section class="library-panel" id="library-panel" aria-labelledby="library-heading">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow" id="active-category-label">全部记录</p>
+                <h1 id="library-heading">回答档案</h1>
+              </div>
+              <div class="list-controls">
+                <span id="result-count">0 条</span>
+                <label class="select-control" aria-label="排序方式">
+                  <i data-lucide="arrow-up-down"></i>
+                  <select id="sort-select">
+                    <option value="newest">最新收录</option>
+                    <option value="oldest">最早收录</option>
+                    <option value="title">标题排序</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+            <div class="entry-list" id="entry-list" aria-live="polite"></div>
+          </section>
+
+          <div class="panel-resizer" id="panel-resizer" role="separator" aria-label="调整回答档案宽度" aria-orientation="vertical" aria-valuemin="280" aria-valuemax="620" aria-valuenow="410" tabindex="0" title="拖动调整宽度">
+            <span aria-hidden="true"></span>
+          </div>
+
+          <article class="reader-panel" id="reader-panel" aria-live="polite">
+            <div class="reader-empty" id="reader-empty">
+              <div class="empty-index" aria-hidden="true">⌁</div>
+              <h2>选择一条记录</h2>
+              <p>正文将在这里打开。</p>
+            </div>
+            <div class="reader-content" id="reader-content" hidden></div>
+          </article>
+        </div>
+      </main>
+    </div>
+
+    <dialog class="modal entry-modal" id="entry-dialog">
+      <form method="dialog" id="entry-form">
+        <div class="modal-heading">
+          <div>
+            <p class="eyebrow">知识入库</p>
+            <h2 id="entry-dialog-title">收录回答</h2>
+          </div>
+          <button class="icon-button" type="button" data-close-dialog="entry-dialog" aria-label="关闭" title="关闭">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <input id="entry-id" type="hidden">
+        <label class="field field-wide">
+          <span>标题</span>
+          <input id="entry-title" name="title" type="text" maxlength="180" required placeholder="这条回答解决了什么问题">
+        </label>
+        <div class="field-row">
+          <label class="field">
+            <span>分类</span>
+            <input id="entry-category" name="category" type="text" list="category-options" placeholder="自动归类">
+          </label>
+          <label class="field">
+            <span>标签</span>
+            <input id="entry-tags" name="tags" type="text" placeholder="前端, 知识库">
+          </label>
+        </div>
+        <label class="field field-wide content-field">
+          <span>正文</span>
+          <textarea id="entry-body" name="content" required placeholder="粘贴 Markdown 或纯文本回答"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button class="text-action" type="button" data-close-dialog="entry-dialog">取消</button>
+          <button class="primary-action" id="save-entry" type="submit">
+            <i data-lucide="archive"></i>
+            <span>保存记录</span>
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal import-modal" id="import-dialog">
+      <form method="dialog" id="import-form">
+        <div class="modal-heading">
+          <div>
+            <p class="eyebrow">文件入库</p>
+            <h2>导入资料</h2>
+          </div>
+          <button class="icon-button" type="button" data-close-dialog="import-dialog" aria-label="关闭" title="关闭">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <button class="drop-zone" id="drop-zone" type="button">
+          <i data-lucide="files"></i>
+          <strong id="drop-title">选择或拖入文件</strong>
+          <span>TXT · MD · HTML · JSON，单个不超过 8 MB</span>
+        </button>
+        <input id="file-input" type="file" multiple accept=".txt,.md,.markdown,.html,.htm,.json" hidden>
+        <div class="file-queue" id="file-queue" hidden></div>
+        <div class="field-row">
+          <label class="field">
+            <span>分类</span>
+            <input id="import-category" name="category" type="text" list="category-options" placeholder="自动归类">
+          </label>
+          <label class="field">
+            <span>统一标签</span>
+            <input id="import-tags" name="tags" type="text" placeholder="项目资料, 待整理">
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button class="text-action" type="button" data-close-dialog="import-dialog">取消</button>
+          <button class="primary-action" id="start-import" type="submit" disabled>
+            <i data-lucide="upload"></i>
+            <span>导入文件</span>
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal confirm-modal" id="confirm-dialog">
+      <form method="dialog">
+        <div class="confirm-symbol"><i data-lucide="trash-2"></i></div>
+        <h2>删除这条记录？</h2>
+        <p>删除后无法恢复。</p>
+        <div class="modal-actions">
+          <button class="text-action" value="cancel">保留记录</button>
+          <button class="danger-action" id="confirm-delete" value="default">删除记录</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="image-viewer" id="image-viewer" aria-label="图片查看器">
+      <header class="image-viewer-toolbar">
+        <div class="image-viewer-identity">
+          <span id="image-viewer-count">1 / 1</span>
+          <strong id="image-viewer-title">图片</strong>
+        </div>
+        <div class="image-viewer-tools" aria-label="图片缩放工具">
+          <button class="viewer-tool" id="image-zoom-out" type="button" aria-label="缩小" title="缩小">
+            <i data-lucide="minus"></i>
+          </button>
+          <output class="zoom-value" id="image-zoom-value" aria-label="当前缩放比例">100%</output>
+          <button class="viewer-tool" id="image-zoom-in" type="button" aria-label="放大" title="放大">
+            <i data-lucide="plus"></i>
+          </button>
+          <button class="viewer-tool" id="image-fit" type="button" aria-label="适合窗口" title="适合窗口">
+            <i data-lucide="scan"></i>
+          </button>
+          <a class="viewer-tool" id="image-download" href="#" download aria-label="下载原图" title="下载原图">
+            <i data-lucide="download"></i>
+          </a>
+          <button class="viewer-tool viewer-close" id="image-viewer-close" type="button" aria-label="关闭图片" title="关闭图片">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+      </header>
+      <div class="image-viewer-stage" id="image-viewer-stage">
+        <button class="image-nav image-nav-previous" id="image-previous" type="button" aria-label="上一张" title="上一张">
+          <i data-lucide="chevron-left"></i>
+        </button>
+        <img id="image-viewer-image" alt="" draggable="false">
+        <button class="image-nav image-nav-next" id="image-next" type="button" aria-label="下一张" title="下一张">
+          <i data-lucide="chevron-right"></i>
+        </button>
+      </div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <datalist id="category-options"></datalist>
+
+    <script src="./config.js"></script>
+    <script src="./vendor/lucide.js"></script>
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>

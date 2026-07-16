@@ -1,0 +1,180 @@
+[
+  {
+    "id": "bf678d39-ea78-47b9-b541-3222eec86eb2",
+    "title": "Codex 回答：如何把回答归档到回声库",
+    "content": "# 直接收录方式\n\n回声库的前端和后端已经连通。网页中的“收录回答”与 Codex 直接写入使用同一个接口：`POST /api/entries`。\n\n## 以后怎么用\n\n当你在这台电脑上运行回声库后，可以直接对 Codex 说：\n\n> 把刚才的回答放进回声库，标题叫“某某方案”，标签是“项目资料”。\n\nCodex 可以把当前回答作为 Markdown 正文提交给后端。保存成功后，这条记录会立即出现在网页列表中，并可以搜索、收藏、复制、编辑或删除。\n\n## 还可以收录什么\n\n- 手动粘贴的 Markdown 或纯文本回答\n- Codex、ChatGPT、Claude 等不同来源的内容\n- 本地 TXT、MD、Markdown 文件\n- 单条或批量记录的 JSON 文件\n\n所有数据默认保存在本机的 `data/entries.json`，不会自动上传到第三方服务。",
+    "category": "知识管理",
+    "tags": [
+      "Codex",
+      "使用说明",
+      "回声库"
+    ],
+    "favorite": false,
+    "file": null,
+    "createdAt": "2026-07-16T06:40:42.888Z",
+    "updatedAt": "2026-07-16T07:22:11.577Z",
+    "assets": [],
+    "contentHtml": "<h1>直接收录方式</h1>\n<p>回声库的前端和后端已经连通。网页中的“收录回答”与 Codex 直接写入使用同一个接口：<code>POST /api/entries</code>。</p>\n<h2>以后怎么用</h2>\n<p>当你在这台电脑上运行回声库后，可以直接对 Codex 说：</p>\n<blockquote>\n<p>把刚才的回答放进回声库，标题叫“某某方案”，标签是“项目资料”。</p>\n</blockquote>\n<p>Codex 可以把当前回答作为 Markdown 正文提交给后端。保存成功后，这条记录会立即出现在网页列表中，并可以搜索、收藏、复制、编辑或删除。</p>\n<h2>还可以收录什么</h2>\n<ul>\n<li>手动粘贴的 Markdown 或纯文本回答</li>\n<li>Codex、ChatGPT、Claude 等不同来源的内容</li>\n<li>本地 TXT、MD、Markdown 文件</li>\n<li>单条或批量记录的 JSON 文件</li>\n</ul>\n<p>所有数据默认保存在本机的 <code>data/entries.json</code>，不会自动上传到第三方服务。</p>\n"
+  },
+  {
+    "id": "e7d2f616-6ac9-4842-9ca1-17ab8b43b418",
+    "title": "提示词学习网站与实用模板推荐",
+    "content": "有。优先看“模型官方指南”，比提示词分享站更可靠。\n\n## 推荐网站\n\n1. [OpenAI Codex 最佳实践](https://developers.openai.com/codex/learn/best-practices)  \n   最适合代码工作。核心结构是：目标、上下文、约束、完成条件。\n\n2. [GPT Image 2 提示词指南](https://developers.openai.com/cookbook/examples/multimodal/image-gen-models-prompting-guide)  \n   针对你正在使用的 `gpt-image-2`，包含摄影、编辑、构图、文字和多图输入。\n\n3. [OpenAI Prompt Engineering](https://developers.openai.com/api/docs/guides/prompt-engineering)  \n   通用提示工程、结构化输出、示例学习和上下文管理。\n\n4. [Anthropic Prompting Best Practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices)  \n   对“怎样减少歧义、加入示例、拆分复杂任务”讲得很系统，方法同样适用于 GPT。\n\n5. [Prompt Engineering Guide](https://www.promptingguide.ai/)  \n   技术比较全面，包括零样本、少样本、提示链、RAG 和 Agent。\n\n6. [Learn Prompting](https://learnprompting.org/)  \n   更偏课程和实践练习，适合系统学习。\n\n## 生图模板\n\n```text\n用途：电影海报人物肖像\n\n主体：25岁亚洲女性，黑色长发，白色西装，神秘自信的微笑\n场景：黄金时刻的现代都市街道，背景虚化\n构图：胸部以上竖版肖像，平视机位，85mm人像镜头\n光线：强逆光，头发边缘形成金色轮廓光，面部阴影受控\n风格：写实电影摄影，真实皮肤和布料纹理，精致电影调色\n约束：自然五官和人体结构，无文字、Logo、水印，不过度磨皮\n输出：1024x1536，high\n```\n\n“85mm、平视、轮廓光、真实布料纹理”通常比“8K、杰作、极致质量”更有效。\n\n## 代码模板\n\n```text\n目标：修复登录接口偶发返回 500 的问题。\n\n上下文：\n- 相关代码在 src/auth 和 src/api/login.ts\n- 错误发生在刷新令牌过期后\n- 日志见 logs/auth-error.txt\n\n要求：\n- 先复现并定位根因，再修改代码\n- 保持现有接口返回结构\n- 不修改无关模块\n- 遵循项目现有错误处理模式\n\n完成条件：\n- 新增覆盖该场景的测试\n- 相关测试、类型检查和 lint 通过\n- 总结根因、修改文件和验证结果\n```\n\n最重要的原则是：**明确结果、提供相关上下文、写清不能改变什么、定义怎样才算完成**。每次迭代只改一个变量，并保留成功版本做对比。",
+    "category": "提示词工程",
+    "tags": [
+      "提示词",
+      "学习资源",
+      "生图",
+      "代码"
+    ],
+    "favorite": false,
+    "file": null,
+    "createdAt": "2026-07-16T07:17:23.155Z",
+    "updatedAt": "2026-07-16T07:17:23.155Z",
+    "assets": [],
+    "contentHtml": "<p>有。优先看“模型官方指南”，比提示词分享站更可靠。</p>\n<h2>推荐网站</h2>\n<ol>\n<li><p><a href=\"https://developers.openai.com/codex/learn/best-practices\" target=\"_blank\" rel=\"noreferrer noopener\">OpenAI Codex 最佳实践</a><br />最适合代码工作。核心结构是：目标、上下文、约束、完成条件。</p>\n</li>\n<li><p><a href=\"https://developers.openai.com/cookbook/examples/multimodal/image-gen-models-prompting-guide\" target=\"_blank\" rel=\"noreferrer noopener\">GPT Image 2 提示词指南</a><br />针对你正在使用的 <code>gpt-image-2</code>，包含摄影、编辑、构图、文字和多图输入。</p>\n</li>\n<li><p><a href=\"https://developers.openai.com/api/docs/guides/prompt-engineering\" target=\"_blank\" rel=\"noreferrer noopener\">OpenAI Prompt Engineering</a><br />通用提示工程、结构化输出、示例学习和上下文管理。</p>\n</li>\n<li><p><a href=\"https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices\" target=\"_blank\" rel=\"noreferrer noopener\">Anthropic Prompting Best Practices</a><br />对“怎样减少歧义、加入示例、拆分复杂任务”讲得很系统，方法同样适用于 GPT。</p>\n</li>\n<li><p><a href=\"https://www.promptingguide.ai/\" target=\"_blank\" rel=\"noreferrer noopener\">Prompt Engineering Guide</a><br />技术比较全面，包括零样本、少样本、提示链、RAG 和 Agent。</p>\n</li>\n<li><p><a href=\"https://learnprompting.org/\" target=\"_blank\" rel=\"noreferrer noopener\">Learn Prompting</a><br />更偏课程和实践练习，适合系统学习。</p>\n</li>\n</ol>\n<h2>生图模板</h2>\n<pre><code class=\"language-text\">用途：电影海报人物肖像\n\n主体：25岁亚洲女性，黑色长发，白色西装，神秘自信的微笑\n场景：黄金时刻的现代都市街道，背景虚化\n构图：胸部以上竖版肖像，平视机位，85mm人像镜头\n光线：强逆光，头发边缘形成金色轮廓光，面部阴影受控\n风格：写实电影摄影，真实皮肤和布料纹理，精致电影调色\n约束：自然五官和人体结构，无文字、Logo、水印，不过度磨皮\n输出：1024x1536，high\n</code></pre>\n<p>“85mm、平视、轮廓光、真实布料纹理”通常比“8K、杰作、极致质量”更有效。</p>\n<h2>代码模板</h2>\n<pre><code class=\"language-text\">目标：修复登录接口偶发返回 500 的问题。\n\n上下文：\n- 相关代码在 src/auth 和 src/api/login.ts\n- 错误发生在刷新令牌过期后\n- 日志见 logs/auth-error.txt\n\n要求：\n- 先复现并定位根因，再修改代码\n- 保持现有接口返回结构\n- 不修改无关模块\n- 遵循项目现有错误处理模式\n\n完成条件：\n- 新增覆盖该场景的测试\n- 相关测试、类型检查和 lint 通过\n- 总结根因、修改文件和验证结果\n</code></pre>\n<p>最重要的原则是：<strong>明确结果、提供相关上下文、写清不能改变什么、定义怎样才算完成</strong>。每次迭代只改一个变量，并保留成功版本做对比。</p>\n"
+  },
+  {
+    "id": "fd3ededb-a35d-49db-ad0d-8abdd2bd7a6b",
+    "title": "集成出包工具使用说明",
+    "content": "# **NPC语音导入流程**\n\n**切分支后需要重新打语音**\n\n![NPC语音导入流程 - 图片 1](/uploads/73ec1a36-92a2-431f-bd45-5ca5b4bacc80.jpg) \n\n复制后等待unity加载\n\n![NPC语音导入流程 - 图片 2](/uploads/7826efec-2851-4b9e-9529-eb775f6a412e.jpg) \n\n打开wwise窗口后在unity导入（没有打开wwise，unity导入会出问题）\n\n![NPC语音导入流程 - 图片 3](/uploads/bee0938e-609d-426c-a539-68ee8ff15feb.jpg) \n\n![NPC语音导入流程 - 图片 4](/uploads/a232039c-7188-48b6-9cb0-5c769b33de08.jpg) \n\n![NPC语音导入流程 - 图片 5](/uploads/91caf5ca-c7e6-42ab-bfa5-2ed5ec39a852.jpg) \n\n![NPC语音导入流程 - 图片 6](/uploads/51e25a43-96e3-4f40-a0cd-7acc451a0d4c.jpg) \n\n![NPC语音导入流程 - 图片 7](/uploads/3a1ca922-1745-4119-ac65-c79156a53c65.png) \n\n![NPC语音导入流程 - 图片 8](/uploads/263edf66-b736-45c2-a01b-917b53c25af7.png) \n\n![NPC语音导入流程 - 图片 9](/uploads/608f14ae-64bf-4812-8409-f27af6165231.png) \n\n![NPC语音导入流程 - 图片 10](/uploads/c5713d6b-8818-4344-a61f-e20be6b107f7.png) \n\n![NPC语音导入流程 - 图片 11](/uploads/28ca43f3-5c2f-4124-88ed-8f508e524747.png) \n\n更新时长后需要提交到sourcetree。\n\n之后只需要新增语音的时候才执行导入流程\n\n![NPC语音导入流程 - 图片 12](/uploads/f3b775b5-00d8-46bb-88d8-3dfc6ffd8c32.jpg) \n\nUnity 编辑器工具说明\n\n# 集成出包工具使用说明\n\n这份说明面向第一次接触工具的同事。你不需要理解代码，只需要按页面上的区域，从上到下操作即可。文档中的截图已经按功能拆分，方便对照界面。\n\n## 快速目录\n\n[1\\. 工具整体说明](#overview) [2\\. 顶部基础区](#base) [3\\. 第一步到第九步](#steps) [4\\. Wwise 区域](#wwise) [5\\. 第十步 Build Game](#build) [6\\. 出错时怎么看](#errors)\n\n先看这个\n\n## 工具整体说明\n\n这个工具已经把原来分散在 Unity 菜单里的常用出包操作集中到一个窗口里，目标是减少反复找菜单、漏点按钮的情况。\n\n**环境切换** 用来决定当前出包使用哪套环境配置，例如开发环境、预发布环境、正式服环境。\n\n**版本号与资源包代码** 输入包版本号后，工具会自动换算出资源包代码，并可以一键保存到配置文件。\n\n**第一步到第九步** 是资源、Addressables、UMA、Fusion 等前置处理流程。可以逐个执行，也可以一键按顺序执行。\n\n**第十步 Build Game** 是最终出包区。前置步骤确认完成后，再到这里选择具体的编译按钮。\n\n建议顺序：先确认环境，再确认版本号，再执行第一步到第九步，最后执行第十步对应的编译按钮。\n\n\n\n## 顶部基础区\n\n这一块包含环境切换、版本号输入、资源包代码自动生成和保存修改功能。\n\n1.  先看“当前环境”，确认当前工具正处于哪套环境。\n2.  如果环境不对，点击对应按钮切换。现在按钮是一排两个，方便快速找到。\n3.  在“版本号”输入框中填写包版本，例如 `1.1.23`。\n4.  工具会自动生成“资源包代码”，例如 `1.1.23 → 1001023`。\n5.  确认无误后，点击“保存修改”，工具会把版本号和资源包代码写入 4 个配置文件。\n\n如果版本号格式写错，例如少写一段或写成中文，下面会出现黄色警告，这时先不要点“保存修改”。\n\n![顶部基础区截图](/uploads/f2ac6357-6431-4801-8fe8-51f733ed1a4e.jpg)\n\n顶部基础区：环境切换、版本号输入、资源包代码、保存修改，以及第一步到第九步总按钮的入口。\n\n\n\n## 第一步到第九步\n\n这一块是前置处理区。你既可以单独点某一步，也可以先用“一键顺序执行”把 1 到 9 步全部跑完。\n\n### 推荐给零基础用户的做法\n\n1.  优先点击“第一步到第九步，按顺序执行”。\n2.  等待工具从上到下自动执行。\n3.  如果中途失败，不要继续点下面的按钮，先看弹窗和 Unity Console，确认是哪一步报错。\n\n### 这 9 步大概在做什么\n\n-   步骤 1：清理资源包旧内容。\n-   步骤 2：清理 Addressables 的构建缓存。\n-   步骤 3：执行 UMA Avatar 资源修复导入。\n-   步骤 4 到步骤 6：临时切换 Fusion 的资源导入检测开关。\n-   步骤 5：生成 UMA 的单组 Addressables。\n-   步骤 7：执行 Addressables 默认构建。\n-   步骤 8：编译资源包。\n-   步骤 9：执行 QF BuildDataTable。\n\n如果你只是想测试某一个步骤是否正常，也可以点对应的“执行步骤 X”按钮单独验证。\n\n![前置步骤截图](/uploads/c00a3083-c9da-49f4-85ea-4a4258903767.jpg)\n\n前置步骤区：上面是“第一步到第九步，按顺序执行”总按钮，下面是每一步的单独执行按钮。\n\n\n\n## Wwise 区域\n\n这个区域主要用于定位 Wwise Launcher 和快速打开当前项目对应的 Wwise 工程。\n\n1.  先看“Wwise Launcher 路径”有没有显示正确位置。\n2.  如果路径不对，点击“更改 Wwise Launcher 路径”。\n3.  如果只需要打开声音工程，直接点击“打开 Wwise 项目”。\n\nWwise 区域已经被放在“第十步”上方，这样你在最终出包前，可以先检查声音工程路径是否正确。\n\n![Wwise 区域截图](/uploads/c4eabae8-fe1d-4e03-a7be-9f5c0f4dc0b8.jpg)\n\nWwise 区域：查看 Launcher 路径、查看项目路径、打开 Wwise 项目。\n\n### 打开 Wwise 项目后的操作\n\n1.  先执行图中 **1 步骤** 的 `Generate Checked`。\n2.  如果执行完成并且没有报错，再继续执行图中 **2 步骤** 的 `Generate All`。\n3.  如果 `Generate Checked` 没有报错，`Generate All` 也没有报错，就可以继续往下执行后面的出包流程。\n4.  如果中途出现任何报错，不要自己继续处理，直接找**森隆**或者**邹路**处理。\n\n判断标准很简单：先看有没有红色报错，两个步骤都没有报错，再继续下一步。有报错就停下，不要继续往下点。\n\n![Wwise 生成步骤截图](/uploads/2dfbca9b-6fdb-4c63-ba1f-9c9acace4b32.png)\n\nWwise 项目内操作：先执行 Generate Checked，再执行 Generate All。两步都没报错，才继续后面的流程。\n\n\n\n## 第十步 Build Game\n\n这是最后真正出包的区域。只有前面的环境、版本号、前置步骤都确认完成后，才建议进入这里。\n\n### 如何选按钮\n\n-   如果你要开发调试包，优先看前两组 Debug 区域。\n-   `Debugging`：适合普通调试。\n-   `DeepProfiler`：适合需要更深层性能分析时使用，通常更慢。\n-   `默认编译`：适合正常使用场景。\n-   如果你要正式出包，使用下面的 Release、预发布、正式服、内测版对应按钮。\n\n如果你不确定该点哪一个，先问清楚本次目标是“开发调试包”还是“正式发布包”，再选择对应区域。\n\n![第十步截图](/uploads/9918222c-9cb4-48f9-b2cf-0014b14fd867.jpg)\n\n第十步 Build Game：根据目标环境，选择对应的编译按钮执行。\n\n排错说明\n\n## 如果执行过程中报错了，怎么看\n\n工具现在已经补了明确提示和日志，即使是零基础用户，也能先看懂失败发生在哪一步。\n\n1.  先看工具弹出的失败提示框。现在会直接显示是哪个步骤失败。\n2.  再看 Unity 的 **Console** 窗口。工具会打印：开始执行、执行完成、执行失败。\n3.  如果你点的是“第一步到第九步，按顺序执行”，日志里会写出是 `步骤 1` 到 `步骤 9` 中的哪一步失败。\n4.  失败后不要继续往下执行，先处理当前报错。\n\n常见排查方式：看 Console 最后一条红色错误，记下失败步骤名称，再把报错内容发给负责工具或项目的人。",
+    "category": "工具使用指南",
+    "tags": [
+      "NPC语音",
+      "集成出包工具",
+      "Wwise",
+      "Build Game",
+      "使用说明"
+    ],
+    "favorite": false,
+    "file": {
+      "name": "merged_preview.html",
+      "size": 6003334,
+      "type": "text/html"
+    },
+    "assets": [
+      {
+        "name": "73ec1a36-92a2-431f-bd45-5ca5b4bacc80.jpg",
+        "url": "./uploads/73ec1a36-92a2-431f-bd45-5ca5b4bacc80.jpg",
+        "type": "image/jpeg",
+        "size": 203729,
+        "alt": "NPC语音导入流程 - 图片 1"
+      },
+      {
+        "name": "7826efec-2851-4b9e-9529-eb775f6a412e.jpg",
+        "url": "./uploads/7826efec-2851-4b9e-9529-eb775f6a412e.jpg",
+        "type": "image/jpeg",
+        "size": 164029,
+        "alt": "NPC语音导入流程 - 图片 2"
+      },
+      {
+        "name": "bee0938e-609d-426c-a539-68ee8ff15feb.jpg",
+        "url": "./uploads/bee0938e-609d-426c-a539-68ee8ff15feb.jpg",
+        "type": "image/jpeg",
+        "size": 162426,
+        "alt": "NPC语音导入流程 - 图片 3"
+      },
+      {
+        "name": "a232039c-7188-48b6-9cb0-5c769b33de08.jpg",
+        "url": "./uploads/a232039c-7188-48b6-9cb0-5c769b33de08.jpg",
+        "type": "image/jpeg",
+        "size": 198932,
+        "alt": "NPC语音导入流程 - 图片 4"
+      },
+      {
+        "name": "91caf5ca-c7e6-42ab-bfa5-2ed5ec39a852.jpg",
+        "url": "./uploads/91caf5ca-c7e6-42ab-bfa5-2ed5ec39a852.jpg",
+        "type": "image/jpeg",
+        "size": 167363,
+        "alt": "NPC语音导入流程 - 图片 5"
+      },
+      {
+        "name": "51e25a43-96e3-4f40-a0cd-7acc451a0d4c.jpg",
+        "url": "./uploads/51e25a43-96e3-4f40-a0cd-7acc451a0d4c.jpg",
+        "type": "image/jpeg",
+        "size": 129059,
+        "alt": "NPC语音导入流程 - 图片 6"
+      },
+      {
+        "name": "3a1ca922-1745-4119-ac65-c79156a53c65.png",
+        "url": "./uploads/3a1ca922-1745-4119-ac65-c79156a53c65.png",
+        "type": "image/png",
+        "size": 545846,
+        "alt": "NPC语音导入流程 - 图片 7"
+      },
+      {
+        "name": "263edf66-b736-45c2-a01b-917b53c25af7.png",
+        "url": "./uploads/263edf66-b736-45c2-a01b-917b53c25af7.png",
+        "type": "image/png",
+        "size": 976140,
+        "alt": "NPC语音导入流程 - 图片 8"
+      },
+      {
+        "name": "608f14ae-64bf-4812-8409-f27af6165231.png",
+        "url": "./uploads/608f14ae-64bf-4812-8409-f27af6165231.png",
+        "type": "image/png",
+        "size": 615283,
+        "alt": "NPC语音导入流程 - 图片 9"
+      },
+      {
+        "name": "c5713d6b-8818-4344-a61f-e20be6b107f7.png",
+        "url": "./uploads/c5713d6b-8818-4344-a61f-e20be6b107f7.png",
+        "type": "image/png",
+        "size": 618718,
+        "alt": "NPC语音导入流程 - 图片 10"
+      },
+      {
+        "name": "28ca43f3-5c2f-4124-88ed-8f508e524747.png",
+        "url": "./uploads/28ca43f3-5c2f-4124-88ed-8f508e524747.png",
+        "type": "image/png",
+        "size": 47847,
+        "alt": "NPC语音导入流程 - 图片 11"
+      },
+      {
+        "name": "f3b775b5-00d8-46bb-88d8-3dfc6ffd8c32.jpg",
+        "url": "./uploads/f3b775b5-00d8-46bb-88d8-3dfc6ffd8c32.jpg",
+        "type": "image/jpeg",
+        "size": 162725,
+        "alt": "NPC语音导入流程 - 图片 12"
+      },
+      {
+        "name": "f2ac6357-6431-4801-8fe8-51f733ed1a4e.jpg",
+        "url": "./uploads/f2ac6357-6431-4801-8fe8-51f733ed1a4e.jpg",
+        "type": "image/jpeg",
+        "size": 56083,
+        "alt": "顶部基础区截图"
+      },
+      {
+        "name": "c00a3083-c9da-49f4-85ea-4a4258903767.jpg",
+        "url": "./uploads/c00a3083-c9da-49f4-85ea-4a4258903767.jpg",
+        "type": "image/jpeg",
+        "size": 76826,
+        "alt": "前置步骤截图"
+      },
+      {
+        "name": "c4eabae8-fe1d-4e03-a7be-9f5c0f4dc0b8.jpg",
+        "url": "./uploads/c4eabae8-fe1d-4e03-a7be-9f5c0f4dc0b8.jpg",
+        "type": "image/jpeg",
+        "size": 26582,
+        "alt": "Wwise 区域截图"
+      },
+      {
+        "name": "2dfbca9b-6fdb-4c63-ba1f-9c9acace4b32.png",
+        "url": "./uploads/2dfbca9b-6fdb-4c63-ba1f-9c9acace4b32.png",
+        "type": "image/png",
+        "size": 230493,
+        "alt": "Wwise 生成步骤截图"
+      },
+      {
+        "name": "9918222c-9cb4-48f9-b2cf-0014b14fd867.jpg",
+        "url": "./uploads/9918222c-9cb4-48f9-b2cf-0014b14fd867.jpg",
+        "type": "image/jpeg",
+        "size": 58730,
+        "alt": "第十步截图"
+      }
+    ],
+    "createdAt": "2026-07-16T07:42:33.520Z",
+    "updatedAt": "2026-07-16T07:46:54.469Z",
+    "contentHtml": "<h1><strong>NPC语音导入流程</strong></h1>\n<p><strong>切分支后需要重新打语音</strong></p>\n<p><img src=\"./uploads/73ec1a36-92a2-431f-bd45-5ca5b4bacc80.jpg\" alt=\"NPC语音导入流程 - 图片 1\" /> </p>\n<p>复制后等待unity加载</p>\n<p><img src=\"./uploads/7826efec-2851-4b9e-9529-eb775f6a412e.jpg\" alt=\"NPC语音导入流程 - 图片 2\" /> </p>\n<p>打开wwise窗口后在unity导入（没有打开wwise，unity导入会出问题）</p>\n<p><img src=\"./uploads/bee0938e-609d-426c-a539-68ee8ff15feb.jpg\" alt=\"NPC语音导入流程 - 图片 3\" /> </p>\n<p><img src=\"./uploads/a232039c-7188-48b6-9cb0-5c769b33de08.jpg\" alt=\"NPC语音导入流程 - 图片 4\" /> </p>\n<p><img src=\"./uploads/91caf5ca-c7e6-42ab-bfa5-2ed5ec39a852.jpg\" alt=\"NPC语音导入流程 - 图片 5\" /> </p>\n<p><img src=\"./uploads/51e25a43-96e3-4f40-a0cd-7acc451a0d4c.jpg\" alt=\"NPC语音导入流程 - 图片 6\" /> </p>\n<p><img src=\"./uploads/3a1ca922-1745-4119-ac65-c79156a53c65.png\" alt=\"NPC语音导入流程 - 图片 7\" /> </p>\n<p><img src=\"./uploads/263edf66-b736-45c2-a01b-917b53c25af7.png\" alt=\"NPC语音导入流程 - 图片 8\" /> </p>\n<p><img src=\"./uploads/608f14ae-64bf-4812-8409-f27af6165231.png\" alt=\"NPC语音导入流程 - 图片 9\" /> </p>\n<p><img src=\"./uploads/c5713d6b-8818-4344-a61f-e20be6b107f7.png\" alt=\"NPC语音导入流程 - 图片 10\" /> </p>\n<p><img src=\"./uploads/28ca43f3-5c2f-4124-88ed-8f508e524747.png\" alt=\"NPC语音导入流程 - 图片 11\" /> </p>\n<p>更新时长后需要提交到sourcetree。</p>\n<p>之后只需要新增语音的时候才执行导入流程</p>\n<p><img src=\"./uploads/f3b775b5-00d8-46bb-88d8-3dfc6ffd8c32.jpg\" alt=\"NPC语音导入流程 - 图片 12\" /> </p>\n<p>Unity 编辑器工具说明</p>\n<h1>集成出包工具使用说明</h1>\n<p>这份说明面向第一次接触工具的同事。你不需要理解代码，只需要按页面上的区域，从上到下操作即可。文档中的截图已经按功能拆分，方便对照界面。</p>\n<h2>快速目录</h2>\n<p><a href=\"#overview\" target=\"_blank\" rel=\"noreferrer noopener\">1. 工具整体说明</a> <a href=\"#base\" target=\"_blank\" rel=\"noreferrer noopener\">2. 顶部基础区</a> <a href=\"#steps\" target=\"_blank\" rel=\"noreferrer noopener\">3. 第一步到第九步</a> <a href=\"#wwise\" target=\"_blank\" rel=\"noreferrer noopener\">4. Wwise 区域</a> <a href=\"#build\" target=\"_blank\" rel=\"noreferrer noopener\">5. 第十步 Build Game</a> <a href=\"#errors\" target=\"_blank\" rel=\"noreferrer noopener\">6. 出错时怎么看</a></p>\n<p>先看这个</p>\n<h2>工具整体说明</h2>\n<p>这个工具已经把原来分散在 Unity 菜单里的常用出包操作集中到一个窗口里，目标是减少反复找菜单、漏点按钮的情况。</p>\n<p><strong>环境切换</strong> 用来决定当前出包使用哪套环境配置，例如开发环境、预发布环境、正式服环境。</p>\n<p><strong>版本号与资源包代码</strong> 输入包版本号后，工具会自动换算出资源包代码，并可以一键保存到配置文件。</p>\n<p><strong>第一步到第九步</strong> 是资源、Addressables、UMA、Fusion 等前置处理流程。可以逐个执行，也可以一键按顺序执行。</p>\n<p><strong>第十步 Build Game</strong> 是最终出包区。前置步骤确认完成后，再到这里选择具体的编译按钮。</p>\n<p>建议顺序：先确认环境，再确认版本号，再执行第一步到第九步，最后执行第十步对应的编译按钮。</p>\n<h2>顶部基础区</h2>\n<p>这一块包含环境切换、版本号输入、资源包代码自动生成和保存修改功能。</p>\n<ol>\n<li>先看“当前环境”，确认当前工具正处于哪套环境。</li>\n<li>如果环境不对，点击对应按钮切换。现在按钮是一排两个，方便快速找到。</li>\n<li>在“版本号”输入框中填写包版本，例如 <code>1.1.23</code>。</li>\n<li>工具会自动生成“资源包代码”，例如 <code>1.1.23 → 1001023</code>。</li>\n<li>确认无误后，点击“保存修改”，工具会把版本号和资源包代码写入 4 个配置文件。</li>\n</ol>\n<p>如果版本号格式写错，例如少写一段或写成中文，下面会出现黄色警告，这时先不要点“保存修改”。</p>\n<p><img src=\"./uploads/f2ac6357-6431-4801-8fe8-51f733ed1a4e.jpg\" alt=\"顶部基础区截图\" /></p>\n<p>顶部基础区：环境切换、版本号输入、资源包代码、保存修改，以及第一步到第九步总按钮的入口。</p>\n<h2>第一步到第九步</h2>\n<p>这一块是前置处理区。你既可以单独点某一步，也可以先用“一键顺序执行”把 1 到 9 步全部跑完。</p>\n<h3>推荐给零基础用户的做法</h3>\n<ol>\n<li>优先点击“第一步到第九步，按顺序执行”。</li>\n<li>等待工具从上到下自动执行。</li>\n<li>如果中途失败，不要继续点下面的按钮，先看弹窗和 Unity Console，确认是哪一步报错。</li>\n</ol>\n<h3>这 9 步大概在做什么</h3>\n<ul>\n<li>步骤 1：清理资源包旧内容。</li>\n<li>步骤 2：清理 Addressables 的构建缓存。</li>\n<li>步骤 3：执行 UMA Avatar 资源修复导入。</li>\n<li>步骤 4 到步骤 6：临时切换 Fusion 的资源导入检测开关。</li>\n<li>步骤 5：生成 UMA 的单组 Addressables。</li>\n<li>步骤 7：执行 Addressables 默认构建。</li>\n<li>步骤 8：编译资源包。</li>\n<li>步骤 9：执行 QF BuildDataTable。</li>\n</ul>\n<p>如果你只是想测试某一个步骤是否正常，也可以点对应的“执行步骤 X”按钮单独验证。</p>\n<p><img src=\"./uploads/c00a3083-c9da-49f4-85ea-4a4258903767.jpg\" alt=\"前置步骤截图\" /></p>\n<p>前置步骤区：上面是“第一步到第九步，按顺序执行”总按钮，下面是每一步的单独执行按钮。</p>\n<h2>Wwise 区域</h2>\n<p>这个区域主要用于定位 Wwise Launcher 和快速打开当前项目对应的 Wwise 工程。</p>\n<ol>\n<li>先看“Wwise Launcher 路径”有没有显示正确位置。</li>\n<li>如果路径不对，点击“更改 Wwise Launcher 路径”。</li>\n<li>如果只需要打开声音工程，直接点击“打开 Wwise 项目”。</li>\n</ol>\n<p>Wwise 区域已经被放在“第十步”上方，这样你在最终出包前，可以先检查声音工程路径是否正确。</p>\n<p><img src=\"./uploads/c4eabae8-fe1d-4e03-a7be-9f5c0f4dc0b8.jpg\" alt=\"Wwise 区域截图\" /></p>\n<p>Wwise 区域：查看 Launcher 路径、查看项目路径、打开 Wwise 项目。</p>\n<h3>打开 Wwise 项目后的操作</h3>\n<ol>\n<li>先执行图中 <strong>1 步骤</strong> 的 <code>Generate Checked</code>。</li>\n<li>如果执行完成并且没有报错，再继续执行图中 <strong>2 步骤</strong> 的 <code>Generate All</code>。</li>\n<li>如果 <code>Generate Checked</code> 没有报错，<code>Generate All</code> 也没有报错，就可以继续往下执行后面的出包流程。</li>\n<li>如果中途出现任何报错，不要自己继续处理，直接找<strong>森隆</strong>或者<strong>邹路</strong>处理。</li>\n</ol>\n<p>判断标准很简单：先看有没有红色报错，两个步骤都没有报错，再继续下一步。有报错就停下，不要继续往下点。</p>\n<p><img src=\"./uploads/2dfbca9b-6fdb-4c63-ba1f-9c9acace4b32.png\" alt=\"Wwise 生成步骤截图\" /></p>\n<p>Wwise 项目内操作：先执行 Generate Checked，再执行 Generate All。两步都没报错，才继续后面的流程。</p>\n<h2>第十步 Build Game</h2>\n<p>这是最后真正出包的区域。只有前面的环境、版本号、前置步骤都确认完成后，才建议进入这里。</p>\n<h3>如何选按钮</h3>\n<ul>\n<li>如果你要开发调试包，优先看前两组 Debug 区域。</li>\n<li><code>Debugging</code>：适合普通调试。</li>\n<li><code>DeepProfiler</code>：适合需要更深层性能分析时使用，通常更慢。</li>\n<li><code>默认编译</code>：适合正常使用场景。</li>\n<li>如果你要正式出包，使用下面的 Release、预发布、正式服、内测版对应按钮。</li>\n</ul>\n<p>如果你不确定该点哪一个，先问清楚本次目标是“开发调试包”还是“正式发布包”，再选择对应区域。</p>\n<p><img src=\"./uploads/9918222c-9cb4-48f9-b2cf-0014b14fd867.jpg\" alt=\"第十步截图\" /></p>\n<p>第十步 Build Game：根据目标环境，选择对应的编译按钮执行。</p>\n<p>排错说明</p>\n<h2>如果执行过程中报错了，怎么看</h2>\n<p>工具现在已经补了明确提示和日志，即使是零基础用户，也能先看懂失败发生在哪一步。</p>\n<ol>\n<li>先看工具弹出的失败提示框。现在会直接显示是哪个步骤失败。</li>\n<li>再看 Unity 的 <strong>Console</strong> 窗口。工具会打印：开始执行、执行完成、执行失败。</li>\n<li>如果你点的是“第一步到第九步，按顺序执行”，日志里会写出是 <code>步骤 1</code> 到 <code>步骤 9</code> 中的哪一步失败。</li>\n<li>失败后不要继续往下执行，先处理当前报错。</li>\n</ol>\n<p>常见排查方式：看 Console 最后一条红色错误，记下失败步骤名称，再把报错内容发给负责工具或项目的人。</p>\n"
+  }
+]

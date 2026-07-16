@@ -19,6 +19,9 @@
                     <li>
                         <a href="{{ site.baseurl }}/">首页</a>
                     </li>
+                    <li>
+                        <a href="{{ '/knowledge/' | prepend: site.baseurl }}">回声库</a>
+                    </li>
                     {% for page in site.pages %}{% if page.title %}
                     <li>
                         <a href="{{ page.url | prepend: site.baseurl }}">{{ page.title }}</a>

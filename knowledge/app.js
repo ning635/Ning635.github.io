@@ -1,16 +1,41 @@
 const runtimeConfig = window.ECHO_ARCHIVE_CONFIG || { mode: 'server' };
 const isReadOnly = runtimeConfig.mode === 'static';
-const categoryColors = ['#246bce', '#2f8a69', '#c26242', '#7c5ab3', '#b07b1f', '#4e7f91', '#a64f72'];
+const categoryColors = ['#5667c9', '#42a998', '#e96f92', '#f0a64a', '#7d67b8', '#3f8eb5', '#d65f72'];
+
+function readExpandedCollections() {
+  try {
+    const value = JSON.parse(localStorage.getItem('echo-expanded-collections') || '[]');
+    return new Set(Array.isArray(value) ? value : []);
+  } catch {
+    return new Set();
+  }
+}
 
 const state = {
   entries: [],
+  collections: [],
   selectedId: null,
   selectedEntry: null,
   category: 'all',
+  categoryId: null,
+  groupId: null,
+  expandedCollections: readExpandedCollections(),
+  deleteTarget: null,
   query: '',
   sort: 'newest',
   importFiles: [],
   requestToken: 0
+};
+
+const editorState = {
+  existingAssets: [],
+  pendingImages: []
+};
+
+const moveState = {
+  selectedValue: '',
+  createMode: 'group',
+  previousPlacement: null
 };
 
 const viewerState = {
@@ -48,7 +73,11 @@ const elements = {
   resultCount: document.querySelector('#result-count'),
   activeCategoryLabel: document.querySelector('#active-category-label'),
   categoryNav: document.querySelector('#category-nav'),
-  categoryOptions: document.querySelector('#category-options'),
+  scopeDescription: document.querySelector('#scope-description'),
+  scopeActions: document.querySelector('#scope-actions'),
+  scopeNewEntry: document.querySelector('#scope-new-entry'),
+  editScope: document.querySelector('#edit-scope'),
+  newGroup: document.querySelector('#new-group'),
   search: document.querySelector('#search-input'),
   sort: document.querySelector('#sort-select'),
   entryDialog: document.querySelector('#entry-dialog'),
@@ -56,9 +85,14 @@ const elements = {
   entryDialogTitle: document.querySelector('#entry-dialog-title'),
   entryId: document.querySelector('#entry-id'),
   entryTitle: document.querySelector('#entry-title'),
+  entryLocation: document.querySelector('#entry-location'),
   entryCategory: document.querySelector('#entry-category'),
+  entryGroup: document.querySelector('#entry-group'),
   entryTags: document.querySelector('#entry-tags'),
   entryBody: document.querySelector('#entry-body'),
+  entryImageInput: document.querySelector('#entry-image-input'),
+  addEntryImages: document.querySelector('#add-entry-images'),
+  editorImageList: document.querySelector('#editor-image-list'),
   saveEntry: document.querySelector('#save-entry'),
   importDialog: document.querySelector('#import-dialog'),
   importForm: document.querySelector('#import-form'),
@@ -67,10 +101,48 @@ const elements = {
   dropZone: document.querySelector('#drop-zone'),
   dropTitle: document.querySelector('#drop-title'),
   importCategory: document.querySelector('#import-category'),
+  importGroup: document.querySelector('#import-group'),
+  importLocation: document.querySelector('#import-location'),
   importTags: document.querySelector('#import-tags'),
   startImport: document.querySelector('#start-import'),
   confirmDialog: document.querySelector('#confirm-dialog'),
+  confirmTitle: document.querySelector('#confirm-title'),
+  confirmDescription: document.querySelector('#confirm-description'),
   confirmDelete: document.querySelector('#confirm-delete'),
+  collectionDialog: document.querySelector('#collection-dialog'),
+  collectionForm: document.querySelector('#collection-form'),
+  collectionDialogTitle: document.querySelector('#collection-dialog-title'),
+  collectionId: document.querySelector('#collection-id'),
+  collectionName: document.querySelector('#collection-name'),
+  collectionDescription: document.querySelector('#collection-description'),
+  deleteCollection: document.querySelector('#delete-collection'),
+  groupDialog: document.querySelector('#group-dialog'),
+  groupForm: document.querySelector('#group-form'),
+  groupDialogTitle: document.querySelector('#group-dialog-title'),
+  groupParentLabel: document.querySelector('#group-parent-label'),
+  groupCollectionId: document.querySelector('#group-collection-id'),
+  groupId: document.querySelector('#group-id'),
+  groupName: document.querySelector('#group-name'),
+  groupDescription: document.querySelector('#group-description'),
+  deleteGroup: document.querySelector('#delete-group'),
+  moveDialog: document.querySelector('#move-dialog'),
+  moveForm: document.querySelector('#move-form'),
+  moveEntryId: document.querySelector('#move-entry-id'),
+  moveEntryTitle: document.querySelector('#move-entry-title'),
+  moveCurrentLocation: document.querySelector('#move-current-location'),
+  moveSearch: document.querySelector('#move-search-input'),
+  moveLocationList: document.querySelector('#move-location-list'),
+  confirmMove: document.querySelector('#confirm-move'),
+  quickCreateParentField: document.querySelector('#quick-create-parent-field'),
+  quickCreateParent: document.querySelector('#quick-create-parent'),
+  quickCreateNameLabel: document.querySelector('#quick-create-name-label'),
+  quickCreateName: document.querySelector('#quick-create-name'),
+  quickCreateSubmit: document.querySelector('#quick-create-submit'),
+  publishSite: document.querySelector('#publish-site'),
+  publishDialog: document.querySelector('#publish-dialog'),
+  publishForm: document.querySelector('#publish-form'),
+  publishSummary: document.querySelector('#publish-summary'),
+  confirmPublish: document.querySelector('#confirm-publish'),
   imageViewer: document.querySelector('#image-viewer'),
   imageViewerStage: document.querySelector('#image-viewer-stage'),
   imageViewerImage: document.querySelector('#image-viewer-image'),
@@ -81,6 +153,8 @@ const elements = {
   imagePrevious: document.querySelector('#image-previous'),
   imageNext: document.querySelector('#image-next'),
   toast: document.querySelector('#toast'),
+  toastMessage: document.querySelector('#toast-message'),
+  toastAction: document.querySelector('#toast-action'),
   storageLabel: document.querySelector('#storage-label'),
   storageSummary: document.querySelector('#storage-summary')
 };
@@ -88,6 +162,33 @@ const elements = {
 let toastTimer;
 let searchTimer;
 let staticEntriesPromise;
+let staticCollectionsPromise;
+let mermaidSequence = 0;
+
+window.mermaid?.initialize({
+  startOnLoad: false,
+  securityLevel: 'strict',
+  suppressErrorRendering: true,
+  theme: 'base',
+  flowchart: {
+    htmlLabels: true,
+    useMaxWidth: false,
+    curve: 'linear',
+    nodeSpacing: 34,
+    rankSpacing: 50
+  },
+  themeVariables: {
+    background: '#151718',
+    primaryColor: '#fff3f7',
+    primaryTextColor: '#242634',
+    primaryBorderColor: '#e96f92',
+    secondaryColor: '#eef0ff',
+    tertiaryColor: '#effaf7',
+    lineColor: '#5667c9',
+    fontFamily: 'Segoe UI Variable Text, Microsoft YaHei UI, sans-serif',
+    fontSize: '15px'
+  }
+});
 
 function refreshIcons(root = document) {
   window.lucide?.createIcons({ attrs: { 'aria-hidden': 'true' }, root });
@@ -103,12 +204,15 @@ function escapeHtml(value = '') {
   })[character]);
 }
 
-function showToast(message, type = 'success') {
+function showToast(message, type = 'success', action = null) {
   clearTimeout(toastTimer);
-  elements.toast.textContent = message;
+  elements.toastMessage.textContent = message;
   elements.toast.classList.toggle('is-error', type === 'error');
+  elements.toastAction.hidden = !action;
+  elements.toastAction.textContent = action?.label || '';
+  elements.toastAction.onclick = action?.onClick || null;
   elements.toast.classList.add('is-visible');
-  toastTimer = setTimeout(() => elements.toast.classList.remove('is-visible'), 2600);
+  toastTimer = setTimeout(() => elements.toast.classList.remove('is-visible'), action ? 6200 : 3000);
 }
 
 function configureRuntime() {
@@ -116,8 +220,9 @@ function configureRuntime() {
   if (!isReadOnly) return;
 
   elements.storageLabel.textContent = '云端镜像';
-  document.querySelector('.topbar-actions').hidden = true;
-  document.querySelectorAll('#new-entry-sidebar, #new-entry, #import-entry').forEach((button) => {
+  document.querySelector('#blog-link').href = '../';
+  document.querySelector('#blog-link').target = '_self';
+  document.querySelectorAll('#new-entry, #new-entry-sidebar, #scope-new-entry, #import-entry, #publish-site, #new-collection-inline, #new-group, #edit-scope').forEach((button) => {
     button.hidden = true;
   });
 }
@@ -151,7 +256,7 @@ function syncLibraryLayout() {
   elements.panelResizer.setAttribute('aria-valuenow', String(appliedWidth));
 
   const icon = isCollapsed ? 'panel-left-open' : 'panel-left-close';
-  const label = isCollapsed ? '显示回答档案' : '隐藏回答档案';
+  const label = isCollapsed ? '显示笔记列表' : '隐藏笔记列表';
   elements.libraryToggle.classList.toggle('is-collapsed', isCollapsed);
   elements.libraryToggle.setAttribute('aria-label', label);
   elements.libraryToggle.setAttribute('title', label);
@@ -206,12 +311,44 @@ async function getStaticEntries() {
   if (!staticEntriesPromise) {
     const url = new URL(runtimeConfig.dataUrl || './data/entries.json', window.location.href);
     staticEntriesPromise = fetch(url, { cache: 'no-store' }).then(async (response) => {
-      if (!response.ok) throw new Error(`云端档案读取失败 (${response.status})`);
+      if (!response.ok) throw new Error(`云端笔记读取失败 (${response.status})`);
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     });
   }
   return staticEntriesPromise;
+}
+
+async function getStaticCollections() {
+  if (!staticCollectionsPromise) {
+    staticCollectionsPromise = (async () => {
+      let savedCollections = [];
+      if (runtimeConfig.collectionsUrl) {
+        const url = new URL(runtimeConfig.collectionsUrl, window.location.href);
+        const response = await fetch(url, { cache: 'no-store' });
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data)) savedCollections = data;
+        }
+      }
+
+      const entries = await getStaticEntries();
+      const byName = new Map(savedCollections.map((collection) => [collection.name, collection]));
+      for (const entry of entries) {
+        if (!byName.has(entry.category)) {
+          byName.set(entry.category, {
+            id: entry.categoryId || `static-${byName.size + 1}`,
+            name: entry.category,
+            description: '',
+            color: categoryColors[byName.size % categoryColors.length],
+            groups: []
+          });
+        }
+      }
+      return [...byName.values()];
+    })();
+  }
+  return staticCollectionsPromise;
 }
 
 async function staticApi(path, options = {}) {
@@ -221,6 +358,17 @@ async function staticApi(path, options = {}) {
   const entries = await getStaticEntries();
 
   if (requestUrl.pathname === '/api/health') return { ok: true, storage: 'cloud-mirror' };
+  if (requestUrl.pathname === '/api/collections') {
+    const collections = await getStaticCollections();
+    return collections.map((collection) => ({
+      ...collection,
+      count: entries.filter((entry) => entry.categoryId === collection.id || (!entry.categoryId && entry.category === collection.name)).length,
+      groups: (collection.groups || []).map((group) => ({
+        ...group,
+        count: entries.filter((entry) => entry.groupId === group.id).length
+      }))
+    }));
+  }
   if (requestUrl.pathname === '/api/stats') {
     const categories = {};
     for (const entry of entries) categories[entry.category] = (categories[entry.category] || 0) + 1;
@@ -236,16 +384,23 @@ async function staticApi(path, options = {}) {
   const entryMatch = requestUrl.pathname.match(/^\/api\/entries\/([^/]+)$/);
   if (entryMatch) {
     const entry = entries.find((item) => item.id === decodeURIComponent(entryMatch[1]));
-    if (!entry) throw new Error('没有找到这条记录');
+    if (!entry) throw new Error('没有找到这篇笔记');
     return entry;
   }
 
   if (requestUrl.pathname === '/api/entries') {
     const query = requestUrl.searchParams.get('query')?.trim().toLocaleLowerCase('zh-CN') || '';
     const category = requestUrl.searchParams.get('category') || 'all';
+    const categoryId = requestUrl.searchParams.get('categoryId') || '';
+    const groupId = requestUrl.searchParams.get('groupId') || '';
     const sort = requestUrl.searchParams.get('sort') || 'newest';
+    const selectedCollection = categoryId
+      ? (await getStaticCollections()).find((collection) => collection.id === categoryId)
+      : null;
     const filtered = entries.filter((entry) => {
       if (category === 'favorite' && !entry.favorite) return false;
+      if (categoryId && entry.categoryId !== categoryId && entry.category !== selectedCollection?.name) return false;
+      if (groupId && entry.groupId !== groupId) return false;
       if (category !== 'all' && category !== 'favorite' && entry.category !== category) return false;
       if (!query) return true;
       return [entry.title, entry.content, entry.category, ...(entry.tags || [])]
@@ -293,25 +448,42 @@ function formatFileSize(bytes) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-function categoryFor(value) {
-  if (value === 'all') return { label: '全部记录', color: '#68747e' };
+function collectionForEntry(entry) {
+  return state.collections.find((collection) => collection.id === entry?.categoryId)
+    || state.collections.find((collection) => collection.name === entry?.category)
+    || null;
+}
+
+function currentCollection() {
+  return state.collections.find((collection) => collection.id === state.categoryId) || null;
+}
+
+function currentGroup() {
+  return currentCollection()?.groups.find((group) => group.id === state.groupId) || null;
+}
+
+function categoryFor(value, categoryId = null) {
+  if (value === 'all') return { label: '全部笔记', color: '#68747e' };
   if (value === 'favorite') return { label: '已收藏', color: '#c08317' };
+  const collection = state.collections.find((item) => item.id === categoryId)
+    || state.collections.find((item) => item.name === value);
+  if (collection) return { label: collection.name, color: collection.color };
   const hash = [...String(value)].reduce((total, character) => ((total * 31) + character.codePointAt(0)) >>> 0, 0);
-  return { label: value || '综合记录', color: categoryColors[hash % categoryColors.length] };
+  return { label: value || '默认笔记本组', color: categoryColors[hash % categoryColors.length] };
 }
 
 function renderList() {
-  elements.resultCount.textContent = `${state.entries.length} 条`;
+  elements.resultCount.textContent = `${state.entries.length} 篇`;
 
   if (!state.entries.length) {
-    const isSearching = Boolean(state.query || state.category !== 'all');
+    const isSearching = Boolean(state.query || state.category !== 'all' || state.categoryId || state.groupId);
     elements.entryList.innerHTML = `
       <div class="list-empty">
         <div>
           <i data-lucide="${isSearching ? 'search-x' : 'archive'}"></i>
-          <h2>${isSearching ? '没有匹配记录' : '档案还是空的'}</h2>
-          <p>${isSearching ? '换一个关键词或分类。' : isReadOnly ? '云端镜像暂时没有记录。' : '收录一条回答，建立第一份索引。'}</p>
-          ${isSearching || isReadOnly ? '' : '<button class="primary-action" type="button" data-empty-create><i data-lucide="plus"></i><span>收录回答</span></button>'}
+          <h2>${isSearching ? '没有找到笔记' : '还没有笔记'}</h2>
+          <p>${isSearching ? '换个关键词，或者在当前笔记本中新建一篇。' : isReadOnly ? '云端镜像暂时没有笔记。' : '新建第一篇笔记。'}</p>
+          ${isReadOnly ? '' : '<button class="primary-action" type="button" data-empty-create><i data-lucide="plus"></i><span>新建笔记</span></button>'}
         </div>
       </div>`;
     elements.entryList.querySelector('[data-empty-create]')?.addEventListener('click', () => openEntryDialog());
@@ -320,14 +492,16 @@ function renderList() {
   }
 
   elements.entryList.innerHTML = state.entries.map((entry, index) => {
-    const category = categoryFor(entry.category);
+    const category = categoryFor(entry.category, entry.categoryId);
+    const collection = collectionForEntry(entry);
+    const group = collection?.groups.find((item) => item.id === entry.groupId);
     const tags = entry.tags?.length ? entry.tags.join(' · ') : '未加标签';
     return `
       <button class="entry-row${entry.id === state.selectedId ? ' is-selected' : ''}" type="button"
         data-entry-id="${escapeHtml(entry.id)}" style="--category-color:${category.color}; animation-delay:${Math.min(index * 24, 144)}ms">
         <span class="entry-row-top">
-          <span class="entry-category">${escapeHtml(category.label)}</span>
-          <span class="entry-date">${escapeHtml(formatListDate(entry.createdAt))}</span>
+          <span class="entry-date">${escapeHtml(formatListDate(entry.updatedAt || entry.createdAt))}</span>
+          <span class="entry-category">${escapeHtml(group ? group.name : category.label)}</span>
         </span>
         <h2>${escapeHtml(entry.title)}</h2>
         <p>${escapeHtml(entry.excerpt || '暂无摘要')}</p>
@@ -351,7 +525,9 @@ function setSelectedRow(id) {
 }
 
 function renderReader(entry) {
-  const category = categoryFor(entry.category);
+  const category = categoryFor(entry.category, entry.categoryId);
+  const collection = collectionForEntry(entry);
+  const group = collection?.groups.find((item) => item.id === entry.groupId);
   const tags = entry.tags?.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join('') || '';
   const fileMeta = entry.file
     ? `<span><i data-lucide="paperclip"></i>${escapeHtml(entry.file.name)} · ${escapeHtml(formatFileSize(entry.file.size))}</span>`
@@ -370,18 +546,21 @@ function renderReader(entry) {
             aria-label="${entry.favorite ? '取消收藏' : '收藏'}" title="${entry.favorite ? '取消收藏' : '收藏'}">
             <i data-lucide="star"></i>
           </button>`}
+          ${isReadOnly ? '' : `<button class="icon-button" type="button" data-reader-move aria-label="移动笔记" title="移动笔记">
+            <i data-lucide="folder-input"></i>
+          </button>`}
           <button class="icon-button" type="button" data-reader-copy aria-label="复制正文" title="复制正文">
             <i data-lucide="copy"></i>
           </button>
-          ${isReadOnly ? '' : `<button class="icon-button" type="button" data-reader-edit aria-label="编辑记录" title="编辑记录">
+          ${isReadOnly ? '' : `<button class="icon-button" type="button" data-reader-edit aria-label="编辑笔记" title="编辑笔记">
             <i data-lucide="square-pen"></i>
           </button>
-          <button class="icon-button" type="button" data-reader-delete aria-label="删除记录" title="删除记录">
+          <button class="icon-button" type="button" data-reader-delete aria-label="删除笔记" title="删除笔记">
             <i data-lucide="trash-2"></i>
           </button>`}
         </div>
       </div>
-      <div class="reader-category-line"><span></span>${escapeHtml(category.label)}</div>
+      <div class="reader-category-line"><span></span>${escapeHtml(group ? `${category.label} / ${group.name}` : category.label)}</div>
       <h1 class="reader-title">${escapeHtml(entry.title)}</h1>
       <div class="reader-meta">
         <span><i data-lucide="calendar-days"></i>${escapeHtml(formatFullDate(entry.createdAt))}</span>
@@ -395,11 +574,59 @@ function renderReader(entry) {
     document.body.classList.remove('view-reader');
   });
   elements.readerContent.querySelector('[data-reader-copy]').addEventListener('click', () => copyText(entry.content));
+  elements.readerContent.querySelector('[data-reader-move]')?.addEventListener('click', () => openMoveDialog(entry));
   elements.readerContent.querySelector('[data-reader-edit]')?.addEventListener('click', () => openEntryDialog(entry));
-  elements.readerContent.querySelector('[data-reader-delete]')?.addEventListener('click', () => elements.confirmDialog.showModal());
+  elements.readerContent.querySelector('[data-reader-delete]')?.addEventListener('click', () => openDeleteConfirm({
+    type: 'entry',
+    id: entry.id,
+    title: '删除这篇笔记？',
+    description: '笔记内容与关联图片会一起删除，且无法恢复。',
+    buttonLabel: '删除笔记'
+  }));
   elements.readerContent.querySelector('[data-reader-favorite]')?.addEventListener('click', () => toggleFavorite(entry));
+  renderMermaidDiagrams(elements.readerContent);
   enhanceReaderImages();
   refreshIcons(elements.readerContent);
+}
+
+async function renderMermaidDiagrams(root) {
+  if (!window.mermaid) return;
+  const blocks = [...root.querySelectorAll('pre > code.language-mermaid')];
+
+  for (const code of blocks) {
+    const pre = code.parentElement;
+    const source = code.textContent.trim();
+    if (!source) continue;
+
+    try {
+      const id = `echo-mermaid-${Date.now()}-${mermaidSequence += 1}`;
+      const { svg, bindFunctions } = await window.mermaid.render(id, source);
+      const shell = document.createElement('figure');
+      shell.className = 'mermaid-shell';
+      shell.setAttribute('aria-label', '流程图');
+
+      const viewport = document.createElement('div');
+      viewport.className = 'mermaid-viewport';
+      viewport.innerHTML = svg;
+      shell.append(viewport);
+
+      const copyButton = document.createElement('button');
+      copyButton.className = 'diagram-copy';
+      copyButton.type = 'button';
+      copyButton.setAttribute('aria-label', '复制流程图源码');
+      copyButton.title = '复制流程图源码';
+      copyButton.innerHTML = '<i data-lucide="copy"></i>';
+      copyButton.addEventListener('click', () => copyText(source, '流程图源码已复制'));
+      shell.append(copyButton);
+
+      pre.replaceWith(shell);
+      bindFunctions?.(viewport);
+      refreshIcons(shell);
+    } catch (error) {
+      pre.classList.add('mermaid-error');
+      pre.title = `流程图渲染失败：${error.message}`;
+    }
+  }
 }
 
 function enhanceReaderImages() {
@@ -512,10 +739,10 @@ function moveViewerImage(direction) {
   showViewerImage();
 }
 
-async function copyText(text) {
+async function copyText(text, successMessage = '正文已复制') {
   try {
     await navigator.clipboard.writeText(text);
-    showToast('正文已复制');
+    showToast(successMessage);
   } catch {
     showToast('浏览器未允许访问剪贴板', 'error');
   }
@@ -543,32 +770,36 @@ async function openEntry(id) {
   document.body.classList.add('view-reader');
   elements.readerEmpty.hidden = false;
   elements.readerContent.hidden = true;
-  elements.readerEmpty.innerHTML = '<div class="list-loading">正在打开记录…</div>';
+  elements.readerEmpty.innerHTML = '<div class="list-loading">正在打开笔记…</div>';
   try {
     const entry = await api(`/api/entries/${id}`);
     if (state.selectedId !== id) return;
     state.selectedEntry = entry;
     renderReader(entry);
   } catch (error) {
-    elements.readerEmpty.innerHTML = `<div class="list-error"><div><h2>无法打开记录</h2><p>${escapeHtml(error.message)}</p></div></div>`;
+    elements.readerEmpty.innerHTML = `<div class="list-error"><div><h2>无法打开笔记</h2><p>${escapeHtml(error.message)}</p></div></div>`;
     showToast(error.message, 'error');
   }
 }
 
 async function loadLibrary({ preferredId = state.selectedId, skipDetail = false } = {}) {
   const token = ++state.requestToken;
-  elements.entryList.innerHTML = '<div class="list-loading">正在整理索引…</div>';
+  elements.entryList.innerHTML = '<div class="list-loading">正在加载笔记…</div>';
   const params = new URLSearchParams({ category: state.category, sort: state.sort });
   if (state.query) params.set('query', state.query);
+  if (state.categoryId) params.set('categoryId', state.categoryId);
+  if (state.groupId) params.set('groupId', state.groupId);
 
   try {
-    const [entries, stats] = await Promise.all([
+    const [entries, stats, collections] = await Promise.all([
       api(`/api/entries?${params}`),
-      api('/api/stats')
+      api('/api/stats'),
+      api('/api/collections')
     ]);
     if (token !== state.requestToken) return;
     state.entries = entries;
-    updateStats(stats);
+    state.collections = collections;
+    updateNavigation(stats);
 
     const nextId = entries.some((entry) => entry.id === preferredId)
       ? preferredId
@@ -579,7 +810,7 @@ async function loadLibrary({ preferredId = state.selectedId, skipDetail = false 
     if (!nextId) {
       state.selectedEntry = null;
       elements.readerEmpty.hidden = false;
-      elements.readerEmpty.innerHTML = '<div class="empty-index" aria-hidden="true">⌁</div><h2>选择一条记录</h2><p>正文将在这里打开。</p>';
+      elements.readerEmpty.innerHTML = '<div class="empty-index" aria-hidden="true">⌁</div><h2>选择一篇笔记</h2><p>笔记内容将在这里打开。</p>';
       elements.readerContent.hidden = true;
       document.body.classList.remove('view-reader');
     } else if (!skipDetail && (!state.selectedEntry || state.selectedEntry.id !== nextId)) {
@@ -588,41 +819,478 @@ async function loadLibrary({ preferredId = state.selectedId, skipDetail = false 
     }
   } catch (error) {
     if (token !== state.requestToken) return;
-    elements.entryList.innerHTML = `<div class="list-error"><div><i data-lucide="wifi-off"></i><h2>无法读取档案</h2><p>${escapeHtml(error.message)}</p><button class="secondary-action" type="button" data-retry>重新加载</button></div></div>`;
+    elements.entryList.innerHTML = `<div class="list-error"><div><i data-lucide="wifi-off"></i><h2>无法读取笔记</h2><p>${escapeHtml(error.message)}</p><button class="secondary-action" type="button" data-retry>重新加载</button></div></div>`;
     elements.entryList.querySelector('[data-retry]')?.addEventListener('click', () => loadLibrary());
     refreshIcons(elements.entryList);
   }
 }
 
-function updateStats(stats) {
+function renderCollectionTree() {
+  if (!state.collections.length) {
+    elements.categoryNav.innerHTML = `
+      <div class="tree-empty">
+        <i data-lucide="folder-open"></i>
+        <span>还没有笔记本组</span>
+        ${isReadOnly ? '' : '<button type="button" data-create-collection>新建笔记本组</button>'}
+      </div>`;
+    refreshIcons(elements.categoryNav);
+    return;
+  }
+
+  elements.categoryNav.innerHTML = state.collections.map((collection) => {
+    const isExpanded = state.expandedCollections.has(collection.id) || state.categoryId === collection.id;
+    const isCollectionActive = state.categoryId === collection.id && !state.groupId;
+    const groups = collection.groups || [];
+    return `
+      <div class="collection-node${isExpanded ? ' is-expanded' : ''}" style="--tree-color:${escapeHtml(collection.color)}">
+        <div class="collection-row${isCollectionActive ? ' is-active' : ''}">
+          ${groups.length
+            ? `<button class="tree-expander" type="button" data-expand-collection="${escapeHtml(collection.id)}" aria-label="${isExpanded ? '收起' : '展开'} ${escapeHtml(collection.name)}" aria-expanded="${isExpanded}"><i data-lucide="chevron-right"></i></button>`
+            : '<span class="tree-expander-spacer"></span>'}
+          <button class="tree-select" type="button" data-collection-id="${escapeHtml(collection.id)}">
+            <i data-lucide="layers-3"></i>
+            <span>${escapeHtml(collection.name)}</span>
+            <b>${collection.count || 0}</b>
+          </button>
+          ${isReadOnly ? '' : `<button class="tree-icon-button tree-edit" type="button" data-edit-collection="${escapeHtml(collection.id)}" aria-label="编辑 ${escapeHtml(collection.name)}" title="编辑笔记本组"><i data-lucide="ellipsis"></i></button>`}
+        </div>
+        <div class="group-branch" ${isExpanded ? '' : 'hidden'}>
+          ${groups.map((group) => `
+            <div class="group-row${state.groupId === group.id ? ' is-active' : ''}">
+              <span class="branch-line" aria-hidden="true"></span>
+              <button class="tree-select group-select" type="button" data-collection-id="${escapeHtml(collection.id)}" data-group-id="${escapeHtml(group.id)}">
+                <i data-lucide="notebook"></i>
+                <span>${escapeHtml(group.name)}</span>
+                <b>${group.count || 0}</b>
+              </button>
+              ${isReadOnly ? '' : `<button class="tree-icon-button tree-edit" type="button" data-edit-group="${escapeHtml(group.id)}" data-parent-id="${escapeHtml(collection.id)}" aria-label="编辑 ${escapeHtml(group.name)}" title="编辑笔记本"><i data-lucide="ellipsis"></i></button>`}
+            </div>`).join('')}
+          ${isReadOnly ? '' : `<button class="add-group-row" type="button" data-add-group="${escapeHtml(collection.id)}"><i data-lucide="plus"></i><span>新建笔记本</span></button>`}
+        </div>
+      </div>`;
+  }).join('');
+  refreshIcons(elements.categoryNav);
+}
+
+function updateScopeHeader() {
+  const collection = currentCollection();
+  const group = currentGroup();
+  elements.scopeActions.hidden = isReadOnly || !collection;
+  elements.newGroup.hidden = Boolean(group);
+  elements.libraryPanel.style.setProperty('--scope-color', collection?.color || '#68747e');
+
+  if (group) {
+    elements.activeCategoryLabel.textContent = collection.name;
+    document.querySelector('#library-heading').textContent = group.name;
+    elements.scopeDescription.textContent = group.description || '这个笔记本还没有说明。';
+    elements.editScope.setAttribute('aria-label', '编辑当前笔记本');
+    elements.editScope.setAttribute('title', '编辑笔记本');
+    elements.scopeNewEntry.setAttribute('aria-label', `在${group.name}中新建笔记`);
+    elements.scopeNewEntry.setAttribute('title', `在${group.name}中新建笔记`);
+    return;
+  }
+  if (collection) {
+    elements.activeCategoryLabel.textContent = `${collection.groups.length} 个笔记本`;
+    document.querySelector('#library-heading').textContent = collection.name;
+    elements.scopeDescription.textContent = collection.description || '这个笔记本组还没有说明。';
+    elements.editScope.setAttribute('aria-label', '编辑当前笔记本组');
+    elements.editScope.setAttribute('title', '编辑笔记本组');
+    elements.scopeNewEntry.setAttribute('aria-label', `在${collection.name}中新建笔记`);
+    elements.scopeNewEntry.setAttribute('title', `在${collection.name}中新建笔记`);
+    return;
+  }
+
+  const isFavorite = state.category === 'favorite';
+  elements.activeCategoryLabel.textContent = '笔记';
+  document.querySelector('#library-heading').textContent = isFavorite ? '已收藏' : '全部笔记';
+  elements.scopeDescription.textContent = isFavorite ? '收藏的笔记都在这里。' : '所有笔记都在这里。';
+}
+
+function updateNavigation(stats) {
   document.querySelector('[data-count="all"]').textContent = stats.total;
   document.querySelector('[data-count="favorite"]').textContent = stats.favorites;
-  const categories = Object.entries(stats.categories);
-  elements.categoryNav.innerHTML = categories.length ? `
-    <p class="nav-label nav-label-spaced">分类</p>
-    ${categories.map(([category, count]) => {
-      const visual = categoryFor(category);
-      return `<button class="category-button${state.category === category ? ' is-active' : ''}" type="button" data-category="${escapeHtml(category)}">
-        <span class="category-dot" style="background:${visual.color}"></span>
-        <span>${escapeHtml(category)}</span>
-        <b>${count}</b>
-      </button>`;
-    }).join('')}` : '';
-  elements.categoryOptions.innerHTML = categories
-    .map(([category]) => `<option value="${escapeHtml(category)}"></option>`)
-    .join('');
-  bindCategoryButtons(elements.categoryNav);
-  elements.storageSummary.textContent = `${stats.total} 条记录 · ${isReadOnly ? '已同步' : '已连接'}`;
+  document.querySelectorAll('[data-category]').forEach((button) => {
+    button.classList.toggle('is-active', !state.categoryId && state.category === button.dataset.category);
+  });
+  renderCollectionTree();
+  updateScopeHeader();
+  elements.storageSummary.textContent = `${stats.total} 篇笔记 · ${isReadOnly ? '已同步' : '已保存'}`;
+}
+
+function clearPendingEditorImages() {
+  editorState.pendingImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+  editorState.pendingImages = [];
+}
+
+function resetEditorImages(entry = null) {
+  clearPendingEditorImages();
+  editorState.existingAssets = (entry?.assets || []).map((asset) => ({ ...asset }));
+  elements.entryImageInput.value = '';
+  renderEditorImages();
+}
+
+function markdownAlt(filename) {
+  return filename.replace(/\.[^.]+$/, '').replace(/[\[\]\\]/g, '\\$&').trim() || '图片';
+}
+
+function insertIntoEntryBody(text) {
+  const textarea = elements.entryBody;
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const before = textarea.value.slice(0, start);
+  const after = textarea.value.slice(end);
+  const prefix = before && !before.endsWith('\n\n') ? (before.endsWith('\n') ? '\n' : '\n\n') : '';
+  const suffix = after && !after.startsWith('\n') ? '\n\n' : '';
+  const insertion = `${prefix}${text}${suffix}`;
+  textarea.setRangeText(insertion, start, end, 'end');
+  textarea.focus();
+}
+
+function addEditorImages(files) {
+  const candidates = [...files];
+  if (!candidates.length) return;
+
+  const acceptedTypes = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
+  const remaining = Math.max(0, 12 - editorState.existingAssets.length - editorState.pendingImages.length);
+  const accepted = [];
+
+  for (const file of candidates.slice(0, remaining)) {
+    if (!acceptedTypes.has(file.type)) {
+      showToast(`${file.name} 格式不受支持`, 'error');
+      continue;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      showToast(`${file.name} 超过 8 MB`, 'error');
+      continue;
+    }
+    const image = {
+      token: crypto.randomUUID(),
+      file,
+      alt: markdownAlt(file.name),
+      previewUrl: URL.createObjectURL(file)
+    };
+    editorState.pendingImages.push(image);
+    accepted.push(image);
+  }
+
+  if (candidates.length > remaining) showToast('每篇笔记最多添加 12 张图片', 'error');
+  if (accepted.length) {
+    insertIntoEntryBody(accepted.map((image) => `![${image.alt}](echo-upload:${image.token})`).join('\n\n'));
+    renderEditorImages();
+  }
+  elements.entryImageInput.value = '';
+}
+
+function removeMarkdownImage(content, url) {
+  const escapedUrl = url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const imagePattern = new RegExp(`!\\[[^\\]]*\\]\\(\\s*${escapedUrl}\\s*(?:["'][^"']*["'])?\\)`, 'g');
+  return content.replace(imagePattern, '').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+function removeEditorImage(kind, key) {
+  if (kind === 'pending') {
+    const index = editorState.pendingImages.findIndex((image) => image.token === key);
+    if (index < 0) return;
+    const [image] = editorState.pendingImages.splice(index, 1);
+    URL.revokeObjectURL(image.previewUrl);
+    elements.entryBody.value = removeMarkdownImage(elements.entryBody.value, `echo-upload:${image.token}`);
+  } else {
+    const index = editorState.existingAssets.findIndex((asset) => asset.name === key);
+    if (index < 0) return;
+    const [asset] = editorState.existingAssets.splice(index, 1);
+    elements.entryBody.value = removeMarkdownImage(elements.entryBody.value, asset.url);
+  }
+  renderEditorImages();
+}
+
+function renderEditorImages() {
+  const items = [
+    ...editorState.existingAssets.map((asset) => ({
+      kind: 'existing',
+      key: asset.name,
+      src: asset.url,
+      name: asset.alt || asset.name,
+      size: asset.size,
+      status: '已保存'
+    })),
+    ...editorState.pendingImages.map((image) => ({
+      kind: 'pending',
+      key: image.token,
+      src: image.previewUrl,
+      name: image.file.name,
+      size: image.file.size,
+      status: '待上传'
+    }))
+  ];
+
+  elements.editorImageList.hidden = items.length === 0;
+  elements.editorImageList.innerHTML = items.map((item) => `
+    <div class="editor-image-item" data-image-kind="${item.kind}" data-image-key="${escapeHtml(item.key)}">
+      <img src="${escapeHtml(item.src)}" alt="${escapeHtml(item.name)}">
+      <span class="editor-image-name">${escapeHtml(item.name)}</span>
+      <span class="editor-image-meta">${escapeHtml(item.status)} · ${escapeHtml(formatFileSize(item.size || 0))}</span>
+      <button class="icon-button editor-image-remove" type="button" aria-label="移除 ${escapeHtml(item.name)}" title="移除图片">
+        <i data-lucide="x"></i>
+      </button>
+    </div>`).join('');
+  refreshIcons(elements.editorImageList);
+}
+
+function fillPlacementFields(locationSelect, categorySelect, groupSelect, categoryId = '', groupId = '') {
+  categorySelect.innerHTML = `
+    <option value="">未选择笔记本组</option>
+    ${state.collections.map((collection) => `<option value="${escapeHtml(collection.id)}">${escapeHtml(collection.name)}</option>`).join('')}`;
+  categorySelect.value = categoryId || '';
+  fillGroupSelect(categorySelect, groupSelect, groupId);
+  locationSelect.innerHTML = `
+    <option value="">未选择笔记本</option>
+    ${state.collections.map((collection) => `
+      <optgroup label="${escapeHtml(collection.name)}">
+        <option value="${escapeHtml(`${collection.id}::`)}">${escapeHtml(collection.name)}（未分组）</option>
+        ${(collection.groups || []).map((group) => `<option value="${escapeHtml(`${collection.id}::${group.id}`)}">${escapeHtml(group.name)}</option>`).join('')}
+      </optgroup>`).join('')}`;
+  const selectedValue = categoryId ? `${categoryId}::${groupId || ''}` : '';
+  locationSelect.value = selectedValue;
+}
+
+function fillGroupSelect(categorySelect, groupSelect, groupId = '') {
+  const collection = state.collections.find((item) => item.id === categorySelect.value);
+  const groups = collection?.groups || [];
+  groupSelect.innerHTML = `
+    <option value="">未选择笔记本</option>
+    ${groups.map((group) => `<option value="${escapeHtml(group.id)}">${escapeHtml(group.name)}</option>`).join('')}`;
+  groupSelect.disabled = groups.length === 0;
+  groupSelect.value = groups.some((group) => group.id === groupId) ? groupId : '';
+}
+
+function syncPlacementFromLocation(locationSelect, categorySelect, groupSelect) {
+  const [categoryId = '', groupId = ''] = locationSelect.value.split('::');
+  categorySelect.value = categoryId;
+  fillGroupSelect(categorySelect, groupSelect, groupId);
+}
+
+function placementDetails(entry) {
+  const collection = collectionForEntry(entry);
+  const group = collection?.groups.find((item) => item.id === entry?.groupId);
+  return {
+    categoryId: collection?.id || null,
+    groupId: group?.id || null,
+    value: collection ? `${collection.id}::${group?.id || ''}` : '',
+    label: collection ? (group ? `${collection.name} / ${group.name}` : `${collection.name} / 未分组`) : '未选择笔记本'
+  };
+}
+
+function renderMoveLocations() {
+  const query = elements.moveSearch.value.trim().toLocaleLowerCase('zh-CN');
+  const sections = state.collections.map((collection) => {
+    const collectionMatches = collection.name.toLocaleLowerCase('zh-CN').includes(query);
+    const groups = (collection.groups || []).filter((group) => (
+      !query || collectionMatches || group.name.toLocaleLowerCase('zh-CN').includes(query)
+    ));
+    if (query && !collectionMatches && !groups.length) return '';
+
+    const options = [
+      { value: `${collection.id}::`, label: '未分组笔记', description: `直接放在“${collection.name}”下`, icon: 'files' },
+      ...groups.map((group) => ({
+        value: `${collection.id}::${group.id}`,
+        label: group.name,
+        description: group.description || `${group.count || 0} 篇笔记`,
+        icon: 'notebook'
+      }))
+    ];
+
+    return `<section class="move-location-group" style="--location-color:${escapeHtml(collection.color || categoryColors[0])}">
+      <h3><span></span>${escapeHtml(collection.name)}<b>${collection.count || 0}</b></h3>
+      ${options.map((option) => {
+        const isSelected = moveState.selectedValue === option.value;
+        return `<button class="move-location-option${isSelected ? ' is-selected' : ''}" type="button"
+          data-move-value="${escapeHtml(option.value)}" role="radio" aria-checked="${isSelected}">
+          <i data-lucide="${option.icon}"></i>
+          <span><strong>${escapeHtml(option.label)}</strong><small>${escapeHtml(option.description)}</small></span>
+          <i class="move-check" data-lucide="${isSelected ? 'circle-check' : 'circle'}"></i>
+        </button>`;
+      }).join('')}
+    </section>`;
+  }).filter(Boolean).join('');
+
+  elements.moveLocationList.innerHTML = sections || `
+    <div class="move-no-results">
+      <i data-lucide="search-x"></i>
+      <strong>没有找到“${escapeHtml(elements.moveSearch.value.trim())}”</strong>
+      <span>可以在下方直接创建新位置。</span>
+    </div>`;
+  elements.confirmMove.disabled = !moveState.selectedValue;
+  refreshIcons(elements.moveLocationList);
+}
+
+function syncQuickCreateMode(mode = moveState.createMode) {
+  moveState.createMode = mode;
+  document.querySelectorAll('[data-create-mode]').forEach((button) => {
+    button.classList.toggle('is-active', button.dataset.createMode === mode);
+  });
+  const createsNotebook = mode === 'notebook';
+  elements.quickCreateParentField.hidden = !createsNotebook;
+  elements.quickCreateNameLabel.textContent = createsNotebook ? '笔记本名称' : '笔记本组名称';
+  elements.quickCreateName.placeholder = createsNotebook ? '例如：第一周学习' : '例如：Unity 学习';
+}
+
+function refreshQuickCreateParents(preferredId = '') {
+  elements.quickCreateParent.innerHTML = state.collections.map((collection) => (
+    `<option value="${escapeHtml(collection.id)}">${escapeHtml(collection.name)}</option>`
+  )).join('');
+  const fallback = preferredId || state.categoryId || state.collections[0]?.id || '';
+  elements.quickCreateParent.value = state.collections.some((collection) => collection.id === fallback) ? fallback : '';
+}
+
+function openMoveDialog(entry) {
+  const placement = placementDetails(entry);
+  moveState.selectedValue = placement.value;
+  moveState.previousPlacement = { categoryId: placement.categoryId, groupId: placement.groupId };
+  elements.moveEntryId.value = entry.id;
+  elements.moveEntryTitle.textContent = entry.title;
+  elements.moveCurrentLocation.textContent = placement.label;
+  elements.moveSearch.value = '';
+  elements.quickCreateName.value = '';
+  refreshQuickCreateParents(placement.categoryId);
+  syncQuickCreateMode('group');
+  renderMoveLocations();
+  elements.moveDialog.showModal();
+  requestAnimationFrame(() => elements.moveSearch.focus());
+}
+
+async function createMoveLocation() {
+  const name = elements.quickCreateName.value.trim();
+  if (!name) {
+    elements.quickCreateName.focus();
+    return showToast('先填写位置名称', 'error');
+  }
+
+  elements.quickCreateSubmit.disabled = true;
+  try {
+    if (moveState.createMode === 'group') {
+      const collection = await api('/api/collections', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name, color: categoryColors[state.collections.length % categoryColors.length] })
+      });
+      moveState.selectedValue = `${collection.id}::`;
+      state.expandedCollections.add(collection.id);
+    } else {
+      const collectionId = elements.quickCreateParent.value;
+      if (!collectionId) throw new Error('请先选择所属笔记本组');
+      const group = await api(`/api/collections/${collectionId}/groups`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+      moveState.selectedValue = `${collectionId}::${group.id}`;
+      state.expandedCollections.add(collectionId);
+    }
+    state.collections = await api('/api/collections');
+    elements.moveSearch.value = '';
+    elements.quickCreateName.value = '';
+    refreshQuickCreateParents(moveState.selectedValue.split('::')[0]);
+    renderMoveLocations();
+    showToast('新位置已创建并选中');
+  } catch (error) {
+    showToast(error.message, 'error');
+  } finally {
+    elements.quickCreateSubmit.disabled = false;
+  }
+}
+
+async function restorePlacement(entryId, placement) {
+  const restored = await api(`/api/entries/${entryId}`, {
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ categoryId: placement.categoryId, groupId: placement.groupId })
+  });
+  state.category = 'all';
+  state.categoryId = restored.categoryId || null;
+  state.groupId = restored.groupId || null;
+  if (restored.categoryId) state.expandedCollections.add(restored.categoryId);
+  await loadLibrary({ preferredId: restored.id, skipDetail: true });
+  renderReader(restored);
+  document.body.classList.add('view-reader');
+  showToast('已撤销移动');
+}
+
+async function moveEntry(event) {
+  event.preventDefault();
+  const entryId = elements.moveEntryId.value;
+  const [categoryId = '', groupId = ''] = moveState.selectedValue.split('::');
+  const previous = moveState.previousPlacement;
+  if (!entryId || !categoryId) return;
+  if (categoryId === previous?.categoryId && (groupId || null) === previous?.groupId) {
+    elements.moveDialog.close();
+    return showToast('笔记已经在这个位置');
+  }
+
+  elements.confirmMove.disabled = true;
+  try {
+    const moved = await api(`/api/entries/${entryId}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ categoryId, groupId: groupId || null })
+    });
+    elements.moveDialog.close();
+    state.category = 'all';
+    state.categoryId = moved.categoryId;
+    state.groupId = moved.groupId || null;
+    state.expandedCollections.add(moved.categoryId);
+    await loadLibrary({ preferredId: moved.id, skipDetail: true });
+    renderReader(moved);
+    document.body.classList.add('view-reader');
+    const destination = placementDetails(moved).label;
+    showToast(`已移动到 ${destination}`, 'success', {
+      label: '撤销',
+      onClick: () => restorePlacement(moved.id, previous).catch((error) => showToast(error.message, 'error'))
+    });
+  } catch (error) {
+    showToast(error.message, 'error');
+  } finally {
+    elements.confirmMove.disabled = !moveState.selectedValue;
+  }
+}
+
+async function openPublishDialog() {
+  try {
+    const stats = await api('/api/stats');
+    elements.publishSummary.textContent = `${stats.total} 篇笔记和关联图片会生成公开静态页面。`;
+  } catch {
+    elements.publishSummary.textContent = '当前笔记和图片会生成公开静态页面。';
+  }
+  elements.publishDialog.showModal();
+}
+
+async function publishSite(event) {
+  event.preventDefault();
+  elements.confirmPublish.disabled = true;
+  elements.confirmPublish.querySelector('span').textContent = '正在构建并发布…';
+  try {
+    const result = await api('/api/publish', { method: 'POST' });
+    elements.publishDialog.close();
+    showToast(result.published ? '博客已发布，GitHub Pages 正在更新' : '线上内容已经是最新版本');
+  } catch (error) {
+    showToast(error.message, 'error');
+  } finally {
+    elements.confirmPublish.disabled = false;
+    elements.confirmPublish.querySelector('span').textContent = '确认发布';
+  }
 }
 
 function openEntryDialog(entry = null) {
   elements.entryForm.reset();
   elements.entryId.value = entry?.id || '';
   elements.entryTitle.value = entry?.title || '';
-  elements.entryCategory.value = entry?.category || '';
+  const legacyCollection = state.collections.find((collection) => collection.name === entry?.category);
+  const categoryId = entry?.categoryId || legacyCollection?.id || state.categoryId || '';
+  const groupId = entry?.groupId || (!entry ? state.groupId : '') || '';
+  fillPlacementFields(elements.entryLocation, elements.entryCategory, elements.entryGroup, categoryId, groupId);
   elements.entryTags.value = entry?.tags?.join(', ') || '';
   elements.entryBody.value = entry?.content || '';
-  elements.entryDialogTitle.textContent = entry ? '编辑记录' : '收录回答';
+  resetEditorImages(entry);
+  elements.entryDialogTitle.textContent = entry ? '编辑笔记' : '新建笔记';
   elements.entryDialog.showModal();
   requestAnimationFrame(() => elements.entryTitle.focus());
 }
@@ -630,28 +1298,58 @@ function openEntryDialog(entry = null) {
 async function saveEntry(event) {
   event.preventDefault();
   const id = elements.entryId.value;
-  const payload = {
-    title: elements.entryTitle.value,
-    category: elements.entryCategory.value,
-    tags: elements.entryTags.value.split(','),
-    content: elements.entryBody.value
-  };
+  const sourceContent = elements.entryBody.value;
+  const pending = editorState.pendingImages.filter((image) => sourceContent.includes(`echo-upload:${image.token}`));
+  let uploadedAssets = [];
+  let entrySaved = false;
 
   elements.saveEntry.disabled = true;
   try {
+    let content = sourceContent;
+    if (pending.length) {
+      const formData = new FormData();
+      pending.forEach((image) => formData.append('images', image.file, image.file.name));
+      const uploaded = await api('/api/uploads', { method: 'POST', body: formData });
+      uploadedAssets = uploaded.assets || [];
+      pending.forEach((image, index) => {
+        content = content.replaceAll(`echo-upload:${image.token}`, uploadedAssets[index].url);
+      });
+    }
+
+    const retainedAssets = editorState.existingAssets.filter((asset) => content.includes(asset.url));
+    const payload = {
+      title: elements.entryTitle.value,
+      categoryId: elements.entryCategory.value || null,
+      groupId: elements.entryGroup.value || null,
+      tags: elements.entryTags.value.split(','),
+      content,
+      assets: [...retainedAssets, ...uploadedAssets]
+    };
     const entry = await api(id ? `/api/entries/${id}` : '/api/entries', {
       method: id ? 'PATCH' : 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payload)
     });
+    entrySaved = true;
     elements.entryDialog.close();
     state.selectedEntry = entry;
     state.selectedId = entry.id;
+    if (entry.categoryId) {
+      state.category = 'all';
+      state.categoryId = entry.categoryId;
+      state.groupId = entry.groupId || null;
+      state.expandedCollections.add(entry.categoryId);
+    }
     await loadLibrary({ preferredId: entry.id, skipDetail: true });
     renderReader(entry);
     document.body.classList.add('view-reader');
-    showToast(id ? '记录已更新' : '回答已收录');
+    showToast(id ? '笔记已更新' : '笔记已保存');
   } catch (error) {
+    if (!entrySaved && uploadedAssets.length) {
+      await Promise.allSettled(uploadedAssets.map((asset) => (
+        api(`/api/uploads/${encodeURIComponent(asset.name)}`, { method: 'DELETE' })
+      )));
+    }
     showToast(error.message, 'error');
   } finally {
     elements.saveEntry.disabled = false;
@@ -661,6 +1359,7 @@ async function saveEntry(event) {
 function openImportDialog() {
   state.importFiles = [];
   elements.importForm.reset();
+  fillPlacementFields(elements.importLocation, elements.importCategory, elements.importGroup, state.categoryId || '', state.groupId || '');
   renderFileQueue();
   elements.importDialog.showModal();
 }
@@ -690,7 +1389,8 @@ async function importFiles(event) {
 
   const formData = new FormData();
   state.importFiles.forEach((file) => formData.append('files', file));
-  formData.append('category', elements.importCategory.value);
+  formData.append('categoryId', elements.importCategory.value);
+  formData.append('groupId', elements.importGroup.value);
   formData.append('tags', elements.importTags.value);
   elements.startImport.disabled = true;
 
@@ -700,9 +1400,15 @@ async function importFiles(event) {
     const newest = created.at(-1);
     state.selectedId = newest?.id || null;
     state.selectedEntry = newest || null;
+    if (newest?.categoryId) {
+      state.category = 'all';
+      state.categoryId = newest.categoryId;
+      state.groupId = newest.groupId || null;
+      state.expandedCollections.add(newest.categoryId);
+    }
     await loadLibrary({ preferredId: newest?.id, skipDetail: true });
     if (newest) renderReader(newest);
-    showToast(`已导入 ${created.length} 条记录`);
+    showToast(`已导入 ${created.length} 篇笔记`);
   } catch (error) {
     showToast(error.message, 'error');
   } finally {
@@ -710,17 +1416,137 @@ async function importFiles(event) {
   }
 }
 
-async function deleteSelected() {
-  const id = state.selectedId;
+function openCollectionDialog(collection = null) {
+  elements.collectionForm.reset();
+  elements.collectionId.value = collection?.id || '';
+  elements.collectionName.value = collection?.name || '';
+  elements.collectionDescription.value = collection?.description || '';
+  elements.collectionDialogTitle.textContent = collection ? '编辑笔记本组' : '新建笔记本组';
+  elements.deleteCollection.hidden = !collection;
+  const legacyColorMap = {
+    '#2f6fdb': '#5667c9', '#2e8b6d': '#42a998', '#b65f3d': '#f0a64a', '#8a5da8': '#7d67b8',
+    '#9a6d12': '#f0a64a', '#39788a': '#3f8eb5', '#a4496d': '#d65f72'
+  };
+  const color = legacyColorMap[collection?.color] || collection?.color || categoryColors[0];
+  const colorInput = elements.collectionForm.querySelector(`input[name="collection-color"][value="${color}"]`)
+    || elements.collectionForm.querySelector('input[name="collection-color"]');
+  colorInput.checked = true;
+  elements.collectionDialog.showModal();
+  requestAnimationFrame(() => elements.collectionName.focus());
+}
+
+async function saveCollection(event) {
+  event.preventDefault();
+  const id = elements.collectionId.value;
+  const submit = document.querySelector('#save-collection');
+  submit.disabled = true;
+  try {
+    const collection = await api(id ? `/api/collections/${id}` : '/api/collections', {
+      method: id ? 'PATCH' : 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        name: elements.collectionName.value,
+        description: elements.collectionDescription.value,
+        color: elements.collectionForm.querySelector('input[name="collection-color"]:checked')?.value
+      })
+    });
+    elements.collectionDialog.close();
+    state.category = 'all';
+    state.categoryId = collection.id;
+    state.groupId = null;
+    state.expandedCollections.add(collection.id);
+    await loadLibrary({ preferredId: null });
+    showToast(id ? '笔记本组已更新' : '笔记本组已创建');
+  } catch (error) {
+    showToast(error.message, 'error');
+  } finally {
+    submit.disabled = false;
+  }
+}
+
+function openGroupDialog(collection, group = null) {
+  if (!collection) return;
+  elements.groupForm.reset();
+  elements.groupCollectionId.value = collection.id;
+  elements.groupId.value = group?.id || '';
+  elements.groupName.value = group?.name || '';
+  elements.groupDescription.value = group?.description || '';
+  elements.groupParentLabel.textContent = collection.name;
+  elements.groupDialogTitle.textContent = group ? '编辑笔记本' : '新建笔记本';
+  elements.deleteGroup.hidden = !group;
+  elements.groupDialog.showModal();
+  requestAnimationFrame(() => elements.groupName.focus());
+}
+
+async function saveGroup(event) {
+  event.preventDefault();
+  const collectionId = elements.groupCollectionId.value;
+  const id = elements.groupId.value;
+  const submit = document.querySelector('#save-group');
+  submit.disabled = true;
+  try {
+    const group = await api(`/api/collections/${collectionId}/groups${id ? `/${id}` : ''}`, {
+      method: id ? 'PATCH' : 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        name: elements.groupName.value,
+        description: elements.groupDescription.value
+      })
+    });
+    elements.groupDialog.close();
+    state.category = 'all';
+    state.categoryId = collectionId;
+    state.groupId = group.id;
+    state.expandedCollections.add(collectionId);
+    await loadLibrary({ preferredId: null });
+    showToast(id ? '笔记本已更新' : '笔记本已创建');
+  } catch (error) {
+    showToast(error.message, 'error');
+  } finally {
+    submit.disabled = false;
+  }
+}
+
+function openDeleteConfirm(target) {
+  state.deleteTarget = target;
+  elements.confirmTitle.textContent = target.title;
+  elements.confirmDescription.textContent = target.description;
+  elements.confirmDelete.textContent = target.buttonLabel;
+  elements.confirmDialog.showModal();
+}
+
+async function deleteStructure(target) {
+  const path = target.type === 'collection'
+    ? `/api/collections/${target.collectionId}`
+    : `/api/collections/${target.collectionId}/groups/${target.groupId}`;
+  await api(path, { method: 'DELETE' });
+  state.category = 'all';
+  state.categoryId = null;
+  state.groupId = null;
+  state.selectedId = null;
+  state.selectedEntry = null;
+  await loadLibrary({ preferredId: null });
+  showToast(target.type === 'collection' ? '笔记本组已删除' : '笔记本已删除');
+}
+
+async function deleteSelected(id = state.selectedId) {
   if (!id) return;
+  await api(`/api/entries/${id}`, { method: 'DELETE' });
+  state.selectedId = null;
+  state.selectedEntry = null;
+  await loadLibrary();
+  showToast('笔记已删除');
+}
+
+async function confirmDeleteTarget() {
+  const target = state.deleteTarget;
+  if (!target) return;
   elements.confirmDelete.disabled = true;
   try {
-    await api(`/api/entries/${id}`, { method: 'DELETE' });
+    if (target.type === 'entry') await deleteSelected(target.id);
+    else await deleteStructure(target);
     elements.confirmDialog.close();
-    state.selectedId = null;
-    state.selectedEntry = null;
-    await loadLibrary();
-    showToast('记录已删除');
+    state.deleteTarget = null;
   } catch (error) {
     showToast(error.message, 'error');
   } finally {
@@ -736,8 +1562,9 @@ function bindCategoryButtons(root = document) {
   root.querySelectorAll('[data-category]').forEach((button) => {
     button.addEventListener('click', () => {
       state.category = button.dataset.category;
+      state.categoryId = null;
+      state.groupId = null;
       document.querySelectorAll('[data-category]').forEach((item) => item.classList.toggle('is-active', item === button));
-      elements.activeCategoryLabel.textContent = categoryFor(state.category).label;
       closeSidebar();
       loadLibrary({ preferredId: null });
     });
@@ -764,12 +1591,147 @@ document.querySelector('#new-entry-sidebar').addEventListener('click', () => {
   closeSidebar();
   openEntryDialog();
 });
+document.querySelector('#new-collection-inline').addEventListener('click', () => openCollectionDialog());
 document.querySelector('#import-entry').addEventListener('click', openImportDialog);
 elements.entryForm.addEventListener('submit', saveEntry);
+elements.entryLocation.addEventListener('change', () => (
+  syncPlacementFromLocation(elements.entryLocation, elements.entryCategory, elements.entryGroup)
+));
+elements.addEntryImages.addEventListener('click', () => elements.entryImageInput.click());
+elements.entryImageInput.addEventListener('change', () => addEditorImages(elements.entryImageInput.files));
+elements.editorImageList.addEventListener('click', (event) => {
+  const button = event.target.closest('.editor-image-remove');
+  const item = button?.closest('[data-image-kind]');
+  if (item) removeEditorImage(item.dataset.imageKind, item.dataset.imageKey);
+});
+elements.entryBody.addEventListener('paste', (event) => {
+  const images = [...(event.clipboardData?.files || [])].filter((file) => file.type.startsWith('image/'));
+  if (!images.length) return;
+  event.preventDefault();
+  addEditorImages(images);
+});
+elements.entryBody.addEventListener('dragover', (event) => {
+  if ([...(event.dataTransfer?.types || [])].includes('Files')) event.preventDefault();
+});
+elements.entryBody.addEventListener('drop', (event) => {
+  const images = [...(event.dataTransfer?.files || [])].filter((file) => file.type.startsWith('image/'));
+  if (!images.length) return;
+  event.preventDefault();
+  addEditorImages(images);
+});
+elements.entryDialog.addEventListener('close', () => {
+  clearPendingEditorImages();
+  editorState.existingAssets = [];
+  elements.editorImageList.innerHTML = '';
+  elements.editorImageList.hidden = true;
+});
 elements.importForm.addEventListener('submit', importFiles);
+elements.importLocation.addEventListener('change', () => (
+  syncPlacementFromLocation(elements.importLocation, elements.importCategory, elements.importGroup)
+));
+elements.collectionForm.addEventListener('submit', saveCollection);
+elements.groupForm.addEventListener('submit', saveGroup);
+elements.moveForm.addEventListener('submit', moveEntry);
+elements.moveSearch.addEventListener('input', renderMoveLocations);
+elements.moveLocationList.addEventListener('click', (event) => {
+  const option = event.target.closest('[data-move-value]');
+  if (!option) return;
+  moveState.selectedValue = option.dataset.moveValue;
+  renderMoveLocations();
+});
+document.querySelectorAll('[data-create-mode]').forEach((button) => {
+  button.addEventListener('click', () => syncQuickCreateMode(button.dataset.createMode));
+});
+elements.quickCreateSubmit.addEventListener('click', createMoveLocation);
+elements.quickCreateName.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter') return;
+  event.preventDefault();
+  createMoveLocation();
+});
+elements.publishSite.addEventListener('click', openPublishDialog);
+elements.publishForm.addEventListener('submit', publishSite);
 elements.confirmDelete.addEventListener('click', (event) => {
   event.preventDefault();
-  deleteSelected();
+  confirmDeleteTarget();
+});
+elements.confirmDialog.addEventListener('close', () => {
+  if (elements.confirmDialog.returnValue === 'cancel') state.deleteTarget = null;
+});
+
+elements.deleteCollection.addEventListener('click', () => {
+  const collection = state.collections.find((item) => item.id === elements.collectionId.value);
+  if (!collection) return;
+  elements.collectionDialog.close();
+  openDeleteConfirm({
+    type: 'collection',
+    collectionId: collection.id,
+    title: `删除“${collection.name}”？`,
+    description: '只有空笔记本组可以删除，请先移动或删除其中的笔记。',
+    buttonLabel: '删除笔记本组'
+  });
+});
+
+elements.deleteGroup.addEventListener('click', () => {
+  const collection = state.collections.find((item) => item.id === elements.groupCollectionId.value);
+  const group = collection?.groups.find((item) => item.id === elements.groupId.value);
+  if (!collection || !group) return;
+  elements.groupDialog.close();
+  openDeleteConfirm({
+    type: 'group',
+    collectionId: collection.id,
+    groupId: group.id,
+    title: `删除“${group.name}”？`,
+    description: '只有空笔记本可以删除，请先移动或删除其中的笔记。',
+    buttonLabel: '删除笔记本'
+  });
+});
+
+elements.categoryNav.addEventListener('click', (event) => {
+  const createButton = event.target.closest('[data-create-collection]');
+  if (createButton) return openCollectionDialog();
+
+  const expandButton = event.target.closest('[data-expand-collection]');
+  if (expandButton) {
+    const id = expandButton.dataset.expandCollection;
+    if (state.expandedCollections.has(id)) state.expandedCollections.delete(id);
+    else state.expandedCollections.add(id);
+    localStorage.setItem('echo-expanded-collections', JSON.stringify([...state.expandedCollections]));
+    renderCollectionTree();
+    return;
+  }
+
+  const editCollection = event.target.closest('[data-edit-collection]');
+  if (editCollection) {
+    return openCollectionDialog(state.collections.find((item) => item.id === editCollection.dataset.editCollection));
+  }
+
+  const addGroup = event.target.closest('[data-add-group]');
+  if (addGroup) return openGroupDialog(state.collections.find((item) => item.id === addGroup.dataset.addGroup));
+
+  const editGroup = event.target.closest('[data-edit-group]');
+  if (editGroup) {
+    const collection = state.collections.find((item) => item.id === editGroup.dataset.parentId);
+    return openGroupDialog(collection, collection?.groups.find((item) => item.id === editGroup.dataset.editGroup));
+  }
+
+  const select = event.target.closest('[data-collection-id]');
+  if (!select) return;
+  state.category = 'all';
+  state.categoryId = select.dataset.collectionId;
+  state.groupId = select.dataset.groupId || null;
+  state.expandedCollections.add(state.categoryId);
+  localStorage.setItem('echo-expanded-collections', JSON.stringify([...state.expandedCollections]));
+  closeSidebar();
+  loadLibrary({ preferredId: null });
+});
+
+elements.newGroup.addEventListener('click', () => openGroupDialog(currentCollection()));
+elements.scopeNewEntry.addEventListener('click', () => openEntryDialog());
+elements.editScope.addEventListener('click', () => {
+  const collection = currentCollection();
+  const group = currentGroup();
+  if (group) openGroupDialog(collection, group);
+  else openCollectionDialog(collection);
 });
 
 document.querySelectorAll('[data-close-dialog]').forEach((button) => {

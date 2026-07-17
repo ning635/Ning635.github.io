@@ -3,19 +3,19 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#202225">
-    <title>回声库 · 回答档案</title>
+    <meta name="theme-color" content="#fff9fc">
+    <title>回声笔记</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23cf493f'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-size='38' font-family='serif' font-weight='700' fill='white'%3E%E5%9B%9E%3C/text%3E%3C/svg%3E">
     <link rel="stylesheet" href="./styles.css">
   </head>
   <body>
     <div class="app-shell">
-      <aside class="sidebar" aria-label="知识库导航">
+      <aside class="sidebar" aria-label="笔记导航">
         <div class="brand-block">
           <div class="brand-mark" aria-hidden="true">回</div>
           <div>
-            <strong>回声库</strong>
-            <span>ANSWER ARCHIVE</span>
+            <strong>回声笔记</strong>
+            <span>ECHO NOTES</span>
           </div>
           <button class="icon-button sidebar-close" id="sidebar-close" type="button" aria-label="关闭导航" title="关闭导航">
             <i data-lucide="x"></i>
@@ -24,14 +24,13 @@
 
         <button class="primary-action sidebar-action" id="new-entry-sidebar" type="button">
           <i data-lucide="plus"></i>
-          <span>收录回答</span>
+          <span>新建笔记</span>
         </button>
 
-        <nav class="category-nav" aria-label="记录分类">
-          <p class="nav-label">资料库</p>
+        <nav class="category-nav" aria-label="笔记导航">
           <button class="category-button is-active" type="button" data-category="all">
-            <i data-lucide="library"></i>
-            <span>全部记录</span>
+            <i data-lucide="notebook-tabs"></i>
+            <span>全部笔记</span>
             <b data-count="all">0</b>
           </button>
           <button class="category-button" type="button" data-category="favorite">
@@ -40,13 +39,19 @@
             <b data-count="favorite">0</b>
           </button>
 
-          <div id="category-nav"></div>
+          <div class="nav-section-heading">
+            <p class="nav-label">笔记本</p>
+            <button class="tree-icon-button" id="new-collection-inline" type="button" aria-label="新建笔记本组" title="新建笔记本组">
+              <i data-lucide="plus"></i>
+            </button>
+          </div>
+          <div class="collection-tree" id="category-nav"></div>
         </nav>
 
         <div class="storage-status">
           <span class="status-light" aria-hidden="true"></span>
           <div>
-            <strong id="storage-label">本地存储</strong>
+            <strong id="storage-label">所有更改已保存</strong>
             <span id="storage-summary">正在连接</span>
           </div>
         </div>
@@ -59,22 +64,30 @@
           <button class="icon-button mobile-menu" id="mobile-menu" type="button" aria-label="打开导航" title="打开导航">
             <i data-lucide="menu"></i>
           </button>
-          <button class="icon-button library-toggle" id="library-toggle" type="button" aria-label="隐藏回答档案" title="隐藏回答档案" aria-controls="library-panel">
+          <button class="icon-button library-toggle" id="library-toggle" type="button" aria-label="隐藏笔记列表" title="隐藏笔记列表" aria-controls="library-panel">
             <i data-lucide="panel-left-close"></i>
           </button>
           <label class="search-box" for="search-input">
             <i data-lucide="search"></i>
-            <input id="search-input" type="search" aria-label="搜索档案" placeholder="搜索标题、正文或标签" autocomplete="off">
+            <input id="search-input" type="search" aria-label="搜索笔记" placeholder="搜索笔记" autocomplete="off">
             <kbd>/</kbd>
           </label>
           <div class="topbar-actions">
-            <button class="secondary-action" id="import-entry" type="button" aria-label="导入文件" title="导入文件">
-              <i data-lucide="upload"></i>
-              <span class="button-label">导入文件</span>
+            <a class="secondary-action blog-link" id="blog-link" href="https://ning635.github.io/" target="_blank" rel="noreferrer" aria-label="打开博客" title="打开博客">
+              <i data-lucide="house"></i>
+              <span class="button-label">博客</span>
+            </a>
+            <button class="secondary-action publish-action" id="publish-site" type="button" aria-label="发布到博客" title="发布到博客">
+              <i data-lucide="cloud-upload"></i>
+              <span class="button-label">发布</span>
             </button>
-            <button class="primary-action" id="new-entry" type="button" aria-label="收录回答" title="收录回答">
+            <button class="secondary-action" id="import-entry" type="button" aria-label="导入笔记" title="导入笔记">
+              <i data-lucide="upload"></i>
+              <span class="button-label">导入</span>
+            </button>
+            <button class="primary-action" id="new-entry" type="button" aria-label="新建笔记" title="新建笔记">
               <i data-lucide="plus"></i>
-              <span class="button-label">收录回答</span>
+              <span class="button-label">新建笔记</span>
             </button>
           </div>
         </header>
@@ -83,33 +96,49 @@
           <section class="library-panel" id="library-panel" aria-labelledby="library-heading">
             <div class="panel-heading">
               <div>
-                <p class="eyebrow" id="active-category-label">全部记录</p>
-                <h1 id="library-heading">回答档案</h1>
+                <p class="eyebrow" id="active-category-label">笔记</p>
+                <h1 id="library-heading">全部笔记</h1>
+                <p class="scope-description" id="scope-description">所有笔记都在这里。</p>
               </div>
-              <div class="list-controls">
-                <span id="result-count">0 条</span>
+              <div class="panel-heading-side">
+                <div class="scope-actions" id="scope-actions" hidden>
+                  <button class="primary-action compact-action scope-new-entry" id="scope-new-entry" type="button">
+                    <i data-lucide="file-plus-2"></i>
+                    <span>新建笔记</span>
+                  </button>
+                  <button class="icon-button" id="edit-scope" type="button" aria-label="编辑当前笔记本组" title="编辑">
+                    <i data-lucide="square-pen"></i>
+                  </button>
+                  <button class="secondary-action compact-action" id="new-group" type="button">
+                    <i data-lucide="folder-plus"></i>
+                    <span>新建笔记本</span>
+                  </button>
+                </div>
+                <div class="list-controls">
+                  <span id="result-count">0 篇</span>
                 <label class="select-control" aria-label="排序方式">
                   <i data-lucide="arrow-up-down"></i>
                   <select id="sort-select">
-                    <option value="newest">最新收录</option>
-                    <option value="oldest">最早收录</option>
+                    <option value="newest">最近创建</option>
+                    <option value="oldest">最早创建</option>
                     <option value="title">标题排序</option>
                   </select>
                 </label>
+                </div>
               </div>
             </div>
             <div class="entry-list" id="entry-list" aria-live="polite"></div>
           </section>
 
-          <div class="panel-resizer" id="panel-resizer" role="separator" aria-label="调整回答档案宽度" aria-orientation="vertical" aria-valuemin="280" aria-valuemax="620" aria-valuenow="410" tabindex="0" title="拖动调整宽度">
+          <div class="panel-resizer" id="panel-resizer" role="separator" aria-label="调整笔记列表宽度" aria-orientation="vertical" aria-valuemin="280" aria-valuemax="620" aria-valuenow="410" tabindex="0" title="拖动调整宽度">
             <span aria-hidden="true"></span>
           </div>
 
           <article class="reader-panel" id="reader-panel" aria-live="polite">
             <div class="reader-empty" id="reader-empty">
               <div class="empty-index" aria-hidden="true">⌁</div>
-              <h2>选择一条记录</h2>
-              <p>正文将在这里打开。</p>
+              <h2>选择一篇笔记</h2>
+              <p>笔记内容将在这里打开。</p>
             </div>
             <div class="reader-content" id="reader-content" hidden></div>
           </article>
@@ -121,8 +150,8 @@
       <form method="dialog" id="entry-form">
         <div class="modal-heading">
           <div>
-            <p class="eyebrow">知识入库</p>
-            <h2 id="entry-dialog-title">收录回答</h2>
+            <p class="eyebrow">笔记</p>
+            <h2 id="entry-dialog-title">新建笔记</h2>
           </div>
           <button class="icon-button" type="button" data-close-dialog="entry-dialog" aria-label="关闭" title="关闭">
             <i data-lucide="x"></i>
@@ -131,12 +160,16 @@
         <input id="entry-id" type="hidden">
         <label class="field field-wide">
           <span>标题</span>
-          <input id="entry-title" name="title" type="text" maxlength="180" required placeholder="这条回答解决了什么问题">
+          <input id="entry-title" name="title" type="text" maxlength="180" required placeholder="笔记标题">
         </label>
-        <div class="field-row">
+        <div class="field-row field-row-placement">
+          <select id="entry-category" name="categoryId" hidden><option value=""></option></select>
+          <select id="entry-group" name="groupId" hidden><option value=""></option></select>
           <label class="field">
-            <span>分类</span>
-            <input id="entry-category" name="category" type="text" list="category-options" placeholder="自动归类">
+            <span>笔记本</span>
+            <select id="entry-location">
+              <option value="">未选择笔记本</option>
+            </select>
           </label>
           <label class="field">
             <span>标签</span>
@@ -144,14 +177,25 @@
           </label>
         </div>
         <label class="field field-wide content-field">
-          <span>正文</span>
-          <textarea id="entry-body" name="content" required placeholder="粘贴 Markdown 或纯文本回答"></textarea>
+            <span>内容</span>
+          <textarea id="entry-body" name="content" required placeholder="开始写笔记，支持 Markdown"></textarea>
         </label>
+        <div class="entry-media-field">
+          <div class="entry-media-heading">
+            <span>图片</span>
+            <button class="secondary-action compact-action" id="add-entry-images" type="button">
+              <i data-lucide="image-plus"></i>
+              <span>添加图片</span>
+            </button>
+          </div>
+          <input id="entry-image-input" type="file" multiple accept="image/jpeg,image/png,image/gif,image/webp" hidden>
+          <div class="editor-image-list" id="editor-image-list" aria-live="polite" hidden></div>
+        </div>
         <div class="modal-actions">
           <button class="text-action" type="button" data-close-dialog="entry-dialog">取消</button>
           <button class="primary-action" id="save-entry" type="submit">
             <i data-lucide="archive"></i>
-            <span>保存记录</span>
+            <span>保存笔记</span>
           </button>
         </div>
       </form>
@@ -161,8 +205,8 @@
       <form method="dialog" id="import-form">
         <div class="modal-heading">
           <div>
-            <p class="eyebrow">文件入库</p>
-            <h2>导入资料</h2>
+            <p class="eyebrow">导入</p>
+            <h2>导入笔记</h2>
           </div>
           <button class="icon-button" type="button" data-close-dialog="import-dialog" aria-label="关闭" title="关闭">
             <i data-lucide="x"></i>
@@ -175,10 +219,14 @@
         </button>
         <input id="file-input" type="file" multiple accept=".txt,.md,.markdown,.html,.htm,.json" hidden>
         <div class="file-queue" id="file-queue" hidden></div>
-        <div class="field-row">
+        <div class="field-row field-row-placement">
+          <select id="import-category" name="categoryId" hidden><option value=""></option></select>
+          <select id="import-group" name="groupId" hidden><option value=""></option></select>
           <label class="field">
-            <span>分类</span>
-            <input id="import-category" name="category" type="text" list="category-options" placeholder="自动归类">
+            <span>笔记本</span>
+            <select id="import-location">
+              <option value="">未选择笔记本</option>
+            </select>
           </label>
           <label class="field">
             <span>统一标签</span>
@@ -195,14 +243,177 @@
       </form>
     </dialog>
 
+    <dialog class="modal structure-modal" id="collection-dialog">
+      <form method="dialog" id="collection-form">
+        <div class="modal-heading">
+          <div>
+            <p class="eyebrow">笔记本组</p>
+            <h2 id="collection-dialog-title">新建笔记本组</h2>
+          </div>
+          <button class="icon-button" type="button" data-close-dialog="collection-dialog" aria-label="关闭" title="关闭">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <input id="collection-id" type="hidden">
+        <label class="field field-wide">
+          <span>笔记本组名称</span>
+          <input id="collection-name" type="text" maxlength="60" required placeholder="例如：Unity 学习">
+        </label>
+        <label class="field field-wide">
+          <span>说明</span>
+          <textarea class="description-input" id="collection-description" maxlength="800" placeholder="这个笔记本组主要整理什么内容"></textarea>
+        </label>
+        <fieldset class="color-field">
+          <legend>标记颜色</legend>
+          <div class="color-swatches" id="collection-colors">
+            <label><input type="radio" name="collection-color" value="#5667c9" checked><span style="--swatch:#5667c9">蓝</span></label>
+            <label><input type="radio" name="collection-color" value="#42a998"><span style="--swatch:#42a998">青</span></label>
+            <label><input type="radio" name="collection-color" value="#e96f92"><span style="--swatch:#e96f92">粉</span></label>
+            <label><input type="radio" name="collection-color" value="#f0a64a"><span style="--swatch:#f0a64a">橙</span></label>
+            <label><input type="radio" name="collection-color" value="#7d67b8"><span style="--swatch:#7d67b8">紫</span></label>
+            <label><input type="radio" name="collection-color" value="#3f8eb5"><span style="--swatch:#3f8eb5">海</span></label>
+            <label><input type="radio" name="collection-color" value="#d65f72"><span style="--swatch:#d65f72">莓</span></label>
+          </div>
+        </fieldset>
+        <div class="modal-actions split-actions">
+          <button class="text-action delete-structure" id="delete-collection" type="button" hidden>删除笔记本组</button>
+          <span></span>
+          <button class="text-action" type="button" data-close-dialog="collection-dialog">取消</button>
+          <button class="primary-action" id="save-collection" type="submit">
+            <i data-lucide="folder-check"></i>
+            <span>保存</span>
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal structure-modal" id="group-dialog">
+      <form method="dialog" id="group-form">
+        <div class="modal-heading">
+          <div>
+            <p class="eyebrow" id="group-parent-label">笔记本组</p>
+            <h2 id="group-dialog-title">新建笔记本</h2>
+          </div>
+          <button class="icon-button" type="button" data-close-dialog="group-dialog" aria-label="关闭" title="关闭">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <input id="group-collection-id" type="hidden">
+        <input id="group-id" type="hidden">
+        <label class="field field-wide">
+          <span>笔记本名称</span>
+          <input id="group-name" type="text" maxlength="60" required placeholder="例如：第一周学习">
+        </label>
+        <label class="field field-wide">
+          <span>说明</span>
+          <textarea class="description-input" id="group-description" maxlength="300" placeholder="这个笔记本准备记录什么内容"></textarea>
+        </label>
+        <div class="modal-actions split-actions">
+          <button class="text-action delete-structure" id="delete-group" type="button" hidden>删除笔记本</button>
+          <span></span>
+          <button class="text-action" type="button" data-close-dialog="group-dialog">取消</button>
+          <button class="primary-action" id="save-group" type="submit">
+            <i data-lucide="folder-check"></i>
+            <span>保存</span>
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal move-modal" id="move-dialog">
+      <form method="dialog" id="move-form">
+        <div class="modal-heading">
+          <div>
+            <p class="eyebrow">整理位置</p>
+            <h2>移动笔记</h2>
+          </div>
+          <button class="icon-button" type="button" data-close-dialog="move-dialog" aria-label="关闭" title="关闭">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <input id="move-entry-id" type="hidden">
+        <div class="move-note-summary">
+          <i data-lucide="file-text"></i>
+          <div>
+            <strong id="move-entry-title">笔记标题</strong>
+            <span>当前位置：<b id="move-current-location">未选择笔记本</b></span>
+          </div>
+        </div>
+        <label class="move-search" for="move-search-input">
+          <i data-lucide="search"></i>
+          <input id="move-search-input" type="search" placeholder="搜索笔记本组或笔记本" autocomplete="off">
+        </label>
+        <div class="move-location-list" id="move-location-list" role="radiogroup" aria-label="目标位置"></div>
+        <div class="quick-create">
+          <div class="quick-create-heading">
+            <strong>没有合适的位置？</strong>
+            <div class="quick-create-modes" role="group" aria-label="创建位置类型">
+              <button class="quick-create-mode is-active" type="button" data-create-mode="group">笔记本组</button>
+              <button class="quick-create-mode" type="button" data-create-mode="notebook">笔记本</button>
+            </div>
+          </div>
+          <div class="quick-create-fields">
+            <label class="field quick-create-parent" id="quick-create-parent-field" hidden>
+              <span>所属笔记本组</span>
+              <select id="quick-create-parent"></select>
+            </label>
+            <label class="field">
+              <span id="quick-create-name-label">笔记本组名称</span>
+              <input id="quick-create-name" type="text" maxlength="60" placeholder="例如：Unity 学习">
+            </label>
+            <button class="secondary-action quick-create-submit" id="quick-create-submit" type="button">
+              <i data-lucide="folder-plus"></i>
+              <span>创建并选中</span>
+            </button>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="text-action" type="button" data-close-dialog="move-dialog">取消</button>
+          <button class="primary-action" id="confirm-move" type="submit" disabled>
+            <i data-lucide="folder-input"></i>
+            <span>移动到这里</span>
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal publish-modal" id="publish-dialog">
+      <form method="dialog" id="publish-form">
+        <div class="modal-heading">
+          <div>
+            <p class="eyebrow">GitHub Pages</p>
+            <h2>发布到博客</h2>
+          </div>
+          <button class="icon-button" type="button" data-close-dialog="publish-dialog" aria-label="关闭" title="关闭">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="publish-target">
+          <i data-lucide="globe-2"></i>
+          <div>
+            <strong>ning635.github.io/knowledge/</strong>
+            <span id="publish-summary">当前笔记和图片会生成公开静态页面。</span>
+          </div>
+        </div>
+        <p class="publish-notice">发布内容可被任何人访问。脚本只提交生成的 <code>knowledge/</code>，不会把 GitHub 凭据写入网页或仓库。</p>
+        <div class="modal-actions">
+          <button class="text-action" type="button" data-close-dialog="publish-dialog">取消</button>
+          <button class="primary-action" id="confirm-publish" type="submit">
+            <i data-lucide="cloud-upload"></i>
+            <span>确认发布</span>
+          </button>
+        </div>
+      </form>
+    </dialog>
+
     <dialog class="modal confirm-modal" id="confirm-dialog">
       <form method="dialog">
         <div class="confirm-symbol"><i data-lucide="trash-2"></i></div>
-        <h2>删除这条记录？</h2>
-        <p>删除后无法恢复。</p>
+        <h2 id="confirm-title">删除这篇笔记？</h2>
+        <p id="confirm-description">删除后无法恢复。</p>
         <div class="modal-actions">
-          <button class="text-action" value="cancel">保留记录</button>
-          <button class="danger-action" id="confirm-delete" value="default">删除记录</button>
+          <button class="text-action" id="confirm-cancel" value="cancel">取消</button>
+          <button class="danger-action" id="confirm-delete" value="default">删除笔记</button>
         </div>
       </form>
     </dialog>
@@ -243,12 +454,14 @@
       </div>
     </dialog>
 
-    <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-    <datalist id="category-options"></datalist>
+    <div class="toast" id="toast" role="status" aria-live="polite">
+      <span id="toast-message"></span>
+      <button id="toast-action" type="button" hidden></button>
+    </div>
 
     <script src="./config.js"></script>
     <script src="./vendor/lucide.js"></script>
+    <script src="./vendor/mermaid.js"></script>
     <script src="./app.js" type="module"></script>
   </body>
 </html>

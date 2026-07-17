@@ -1,0 +1,86 @@
+[
+  {
+    "id": "c1ea417a-b387-4317-8e8a-57a1b07d8caf",
+    "name": "知识管理",
+    "description": "",
+    "color": "#2f6fdb",
+    "groups": [
+      {
+        "id": "8e5a7683-5156-42a9-9bf6-7f9452db765b",
+        "name": "1",
+        "description": "",
+        "createdAt": "2026-07-17T07:53:29.621Z",
+        "updatedAt": "2026-07-17T07:53:29.621Z"
+      }
+    ],
+    "createdAt": "2026-07-17T06:45:04.837Z",
+    "updatedAt": "2026-07-17T07:53:29.621Z"
+  },
+  {
+    "id": "da046221-5248-44f8-81aa-81130dae6fce",
+    "name": "提示词工程",
+    "description": "",
+    "color": "#2e8b6d",
+    "groups": [],
+    "createdAt": "2026-07-17T06:45:04.837Z",
+    "updatedAt": "2026-07-17T06:45:04.837Z"
+  },
+  {
+    "id": "046665e9-cb9f-4e1a-890a-f092b8b6d0cd",
+    "name": "工具使用指南",
+    "description": "",
+    "color": "#b65f3d",
+    "groups": [],
+    "createdAt": "2026-07-17T06:45:04.837Z",
+    "updatedAt": "2026-07-17T06:45:04.837Z"
+  },
+  {
+    "id": "6d5fc7eb-8c40-49a1-92c3-0ce10e706d21",
+    "name": "前端开发",
+    "description": "",
+    "color": "#8a5da8",
+    "groups": [],
+    "createdAt": "2026-07-17T06:45:04.837Z",
+    "updatedAt": "2026-07-17T06:45:04.837Z"
+  },
+  {
+    "id": "7e19136b-e388-437d-b912-e7a3f6e8c5eb",
+    "name": "little planet客户端学习",
+    "description": "",
+    "color": "#5667c9",
+    "groups": [],
+    "createdAt": "2026-07-17T08:45:51.088Z",
+    "updatedAt": "2026-07-17T08:45:51.088Z"
+  },
+  {
+    "id": "08308d37-a041-4420-970e-b87fe181c9fd",
+    "name": "博客文章",
+    "description": "从 Ning's Blog 同步的公开文章，按课程项目、AI 与算法和数据库学习整理。",
+    "color": "#e96f92",
+    "groups": [
+      {
+        "id": "5afaf0cd-7f5a-4a52-9576-c62d8872493a",
+        "name": "课程项目",
+        "description": "课程设计、系统开发报告与图形学项目总结。",
+        "createdAt": "2026-07-17T09:28:10.785Z",
+        "updatedAt": "2026-07-17T09:28:10.785Z"
+      },
+      {
+        "id": "3c83ec2c-5f2c-4572-a3c4-3756ba05dcef",
+        "name": "AI 与算法",
+        "description": "强化学习、计算机视觉与算法实验记录。",
+        "createdAt": "2026-07-17T09:28:10.792Z",
+        "updatedAt": "2026-07-17T09:28:10.792Z"
+      },
+      {
+        "id": "4ecc4e43-11f0-4784-84bd-504ac88244e4",
+        "name": "数据库学习",
+        "description": "MySQL、数据建模与数据库实践笔记。",
+        "createdAt": "2026-07-17T09:28:10.800Z",
+        "updatedAt": "2026-07-17T09:28:10.800Z"
+      }
+    ],
+    "createdAt": "2026-07-17T09:28:10.782Z",
+    "updatedAt": "2026-07-17T09:28:10.800Z"
+  }
+]

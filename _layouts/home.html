@@ -105,7 +105,7 @@ layout: default
             </div>
 
             <aside class="home-desk">
-                <section class="home-profile">
+                <section class="home-profile home-reflective-card">
                     <div class="home-profile__image">
                         <img src="{{ site.sidebar-avatar | prepend: site.baseurl }}" alt="宁禅游的头像">
                         <span>ONLINE</span>
@@ -118,7 +118,7 @@ layout: default
                         <a href="mailto:{{ site.email }}">联系我</a>
                     </div>
                 </section>
-                <section class="home-now">
+                <section class="home-now home-reflective-card">
                     <p class="home-section__kicker">CURRENT QUEST</p>
                     <h3>当前学习任务</h3>
                     <ul>
@@ -159,7 +159,7 @@ layout: default
             </div>
             <div class="home-pick-grid">
                 {% for post in home_posts limit:3 %}
-                <article class="home-pick">
+                <article class="home-pick home-reflective-card">
                     <span>{{ post.date | date: "%m.%d" }}</span>
                     <a href="{{ post.url | prepend: site.baseurl }}"><h3>{{ post.title }}</h3></a>
                     <p>{{ post.content | strip_html | strip_newlines | truncate: 100 }}</p>

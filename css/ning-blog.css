@@ -354,6 +354,85 @@ button:focus-visible {
   align-items: start;
 }
 
+.home-reflective-card {
+  --reflect-x: 50%;
+  --reflect-y: 50%;
+  --reflect-rotate-x: 0deg;
+  --reflect-rotate-y: 0deg;
+  --reflect-lift: 0px;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transform:
+    perspective(900px)
+    rotateX(var(--reflect-rotate-x))
+    rotateY(var(--reflect-rotate-y))
+    translateY(var(--reflect-lift));
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease,
+    border-color 220ms ease,
+    background-color 220ms ease;
+}
+
+.home-reflective-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.home-reflective-card::before,
+.home-reflective-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+.home-reflective-card::before {
+  background:
+    radial-gradient(
+      circle at var(--reflect-x) var(--reflect-y),
+      rgba(255, 255, 255, 0.82) 0%,
+      rgba(255, 216, 228, 0.28) 20%,
+      rgba(255, 255, 255, 0) 48%
+    ),
+    linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0) 24%,
+      rgba(255, 255, 255, 0.26) 44%,
+      rgba(255, 255, 255, 0.08) 52%,
+      rgba(255, 255, 255, 0) 70%
+    );
+}
+
+.home-reflective-card::after {
+  border: 1px solid rgba(255, 255, 255, 0.66);
+  border-radius: inherit;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.home-reflective-card:hover,
+.home-reflective-card:focus-within,
+.home-reflective-card.is-reflecting {
+  --reflect-lift: -4px;
+  border-color: rgba(233, 111, 146, 0.36);
+  box-shadow: 0 24px 62px rgba(45, 40, 58, 0.16);
+}
+
+.home-reflective-card:hover::before,
+.home-reflective-card:hover::after,
+.home-reflective-card:focus-within::before,
+.home-reflective-card:focus-within::after,
+.home-reflective-card.is-reflecting::before,
+.home-reflective-card.is-reflecting::after {
+  opacity: 1;
+}
+
 .home-section__head {
   display: flex;
   align-items: end;
@@ -1170,5 +1249,23 @@ footer .fa-inverse {
   *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@media (hover: none), (prefers-reduced-motion: reduce) {
+  .home-reflective-card {
+    transform: none;
+    will-change: auto;
+  }
+
+  .home-reflective-card::before,
+  .home-reflective-card::after {
+    display: none;
+  }
+
+  .home-reflective-card:hover,
+  .home-reflective-card:focus-within,
+  .home-reflective-card.is-reflecting {
+    transform: none;
   }
 }

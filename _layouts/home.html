@@ -17,28 +17,46 @@ layout: default
 <header class="home-hero" style="background-image: url('{{ site.baseurl }}/{{ home_header_img }}')">
     <div class="home-hero__issue" aria-hidden="true">NING CHANNEL / VOL.2026</div>
     <div class="home-hero__inner">
-        <p class="home-hero__eyebrow">{{ page.kicker }} · PERSONAL LOG</p>
-        <h1>{{ page.hero-title }}</h1>
-        <p class="home-hero__lead">{{ page.hero-description }}</p>
-        <div class="home-hero__actions">
-            <a class="home-button home-button--primary" href="#latest">
-                <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
-                最近更新
-            </a>
-            <a class="home-button home-button--knowledge" href="{{ '/knowledge/' | prepend: site.baseurl }}">
-                <i class="fa fa-book" aria-hidden="true"></i>
-                打开回声库
-            </a>
-            <a class="home-button home-button--ghost" target="_blank" rel="noreferrer" href="https://github.com/{{ site.github_username }}" aria-label="打开 Ning 的 GitHub">
-                <i class="fa fa-github" aria-hidden="true"></i>
-                GitHub
-            </a>
+        <div class="home-hero__copy">
+            <p class="home-hero__eyebrow">{{ page.kicker }} · PERSONAL LOG</p>
+            <h1>{{ page.hero-title }}</h1>
+            <p class="home-hero__lead">{{ page.hero-description }}</p>
+            <div class="home-hero__actions">
+                <a class="home-button home-button--primary" href="#latest">
+                    <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+                    最近更新
+                </a>
+                <a class="home-button home-button--knowledge" href="{{ '/knowledge/' | prepend: site.baseurl }}">
+                    <i class="fa fa-book" aria-hidden="true"></i>
+                    打开回声库
+                </a>
+                <a class="home-button home-button--ghost" target="_blank" rel="noreferrer" href="https://github.com/{{ site.github_username }}" aria-label="打开 Ning 的 GitHub">
+                    <i class="fa fa-github" aria-hidden="true"></i>
+                    GitHub
+                </a>
+            </div>
         </div>
-        <dl class="home-hero__meta">
-            <div><dt>NOW</dt><dd>Unity · AI · 工程复盘</dd></div>
-            <div><dt>ARCHIVE</dt><dd>{{ site.posts | size }} 篇公开记录</dd></div>
-            <div><dt>STATUS</dt><dd>持续学习中</dd></div>
-        </dl>
+        <aside class="home-hero__console home-reflective-card" aria-label="博客状态面板">
+            <div class="home-console__topline">
+                <span>PROFILE TRACE</span>
+                <b>ONLINE</b>
+            </div>
+            <div class="home-console__avatar">
+                <img src="{{ site.sidebar-avatar | prepend: site.baseurl }}" alt="宁禅游的头像">
+            </div>
+            <dl class="home-hero__meta">
+                <div><dt>NOW</dt><dd>Unity · AI · 工程复盘</dd></div>
+                <div><dt>ARCHIVE</dt><dd>{{ site.posts | size }} 篇公开记录</dd></div>
+                <div><dt>STATUS</dt><dd>持续学习中</dd></div>
+            </dl>
+            <div class="home-console__stack">
+                <span>MySQL</span>
+                <span>OpenGL</span>
+                <span>CV</span>
+                <span>A3C</span>
+                <span>Jekyll</span>
+            </div>
+        </aside>
     </div>
 </header>
 
@@ -65,7 +83,7 @@ layout: default
                 </div>
                 <div class="home-story-list">
                     {% for post in home_posts %}
-                    <article class="home-story">
+                    <article class="home-story home-reflective-card">
                         <div class="home-story__index">{% if forloop.index < 10 %}0{% endif %}{{ forloop.index }}</div>
                         <div class="home-story__body">
                             <div class="home-story__meta">
@@ -126,6 +144,7 @@ layout: default
                         <li><span></span>算法、AI 与实验复盘</li>
                         <li><span></span>把零散回答整理成知识</li>
                     </ul>
+                    <a class="home-now__link" href="{{ '/about/' | prepend: site.baseurl }}">查看学习路线 <i class="fa fa-long-arrow-right" aria-hidden="true"></i></a>
                 </section>
             </aside>
         </div>
